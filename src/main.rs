@@ -69,8 +69,9 @@ fn parsing_op(op:&str) {
          "intro_x86" => threadintro::x86::x86_op_parse(op_vec),
          //"lock_x86" => threadintro::x86::x86_op_parse(op_vec),
          //  "disk" => 
-         //  "raid"
+         //  "raid" =>
          "vsfs" => vsfs::vsfs_op_parse(op_vec),
+         // "afs" => 
          _ => println!("I dont know,what are you  talking about"),
      }
 }
