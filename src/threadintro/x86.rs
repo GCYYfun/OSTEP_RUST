@@ -244,7 +244,235 @@ impl Cpu{
         self.registers.insert(dst,self.memory[&tmp]);
     }
 
-    //fn move_r_to_m
+    fn move_r_to_m(&mut self,src:u8,value:i32,reg1:u8,reg2:u8) -> i32{
+        let tmp = value + self.registers[&reg1] + self.registers[&reg2];
+        self.memory.insert(tmp,self.registers[&src]);
+        return 0;
+    }
+
+    fn move_r_to_r(&mut self, src:u8, dst:u8) -> i32{
+        self.registers.insert(dst,self.registers[&src]);
+        return 0;
+    }
+
+    fn add_i_to_r(&mut self, src:i32, dst:u8) -> i32{
+        self.registers.insert(dst,self.registers[&dst]+src);
+        return 0;
+    }
+
+    fn add_r_to_r(&mut self, src:u8, dst:u8) -> i32{
+        self.registers.insert(dst,self.registers[&dst]+self.registers[&src]);
+        return 0;
+    }
+
+    fn sub_i_to_r(&mut self, src:i32, dst:u8) -> i32{
+        self.registers.insert(dst,self.registers[&dst]-src);
+        return 0;
+    }
+
+    fn sub_r_to_r(&mut self, src:u8, dst:u8) -> i32{
+        self.registers.insert(dst,self.registers[&dst]-self.registers[&src]);
+        return 0;
+    }
+
+    //
+    // SUPPORT FOR LOCKS
+    //
+
+    fn atomic_exchange(&mut self,src:u8,value:i32,reg1:u8,reg2:u8) -> i32 {
+        let tmp = value + self.registers[&reg1] + self.registers[&reg2];
+        let old = self.memory[&tmp];
+        self.memory.insert(tmp,self.registers[&src]);
+        self.registers.insert(src,old);
+        return 0;
+    }
+
+    fn fetchadd(&mut self,src:u8,value:i32,reg1:u8,reg2:u8) -> i32 {
+        let tmp = value + self.registers[&reg1] + self.registers[&reg2];
+        let old = self.memory[&tmp];
+        self.memory.insert(tmp,self.memory[&tmp]+self.registers[&src]);
+        self.registers.insert(src,old);
+        return 0;
+    }
+
+    //
+    //  TEST for conditions
+    //
+
+    fn test_all(&mut self,src:u8,dst:u8) -> i32 {
+        self.init_condition_codes();
+        if dst > src {
+            self.conditions.insert(self.COND_GT,true);
+        }
+        if dst >= src {
+            self.conditions.insert(self.COND_GTE,true);
+        }
+        if dst < src {
+            self.conditions.insert(self.COND_LT, true);
+        }
+        if dst <= src {
+            self.conditions.insert(self.COND_LTE,true);
+        }
+        if dst == src {
+            self.conditions.insert(self.COND_EQ,true);
+        }
+        if dst != src {
+            self.conditions.insert(self.COND_NEQ,true);
+        }
+        return 0
+
+    }
+
+    fn test_i_r(&mut self,src:u8,dst:u8) -> i32 {
+        self.init_condition_codes();
+        return self.test_all(src,self.registers[&dst] as u8);
+    }
+
+    fn test_r_i(&mut self,src:u8,dst:u8) -> i32 {
+        self.init_condition_codes();
+        return self.test_all(self.registers[&src] as u8,dst);
+    }
+
+    fn test_r_r(&mut self,src:u8,dst:u8) -> i32 {
+        self.init_condition_codes();
+        return self.test_all(self.registers[&src] as u8,self.registers[&dst] as u8);
+    }
+
+    //
+    //  JUMPS
+    //
+
+    fn jump(&mut self,targ:i32) -> i32{
+        self.PC = targ;
+        return 0;
+    }
+
+    fn jump_notequal(&mut self,targ:i32) -> i32{
+        if self.conditions[&self.COND_NEQ] == true {
+            self.PC = targ;
+        }
+        return 0;
+    }
+
+    fn jump_equal(&mut self,targ:i32) -> i32{
+        if self.conditions[&self.COND_EQ] == true {
+            self.PC = targ;
+        }
+        return 0;
+    }
+
+    fn jump_lessthan(&mut self,targ:i32) -> i32{
+        if self.conditions[&self.COND_LT] == true {
+            self.PC = targ;
+        }
+        return 0;
+    }
+
+    fn jump_lessthanorequal(&mut self,targ:i32) -> i32{
+        if self.conditions[&self.COND_LTE] == true {
+            self.PC = targ;
+        }
+        return 0;
+    }
+
+    fn jump_greaterthan(&mut self,targ:i32) -> i32{
+        if self.conditions[&self.COND_GT] == true {
+            self.PC = targ;
+        }
+        return 0;
+    }
+
+    fn jump_greaterthanorequal(&mut self,targ:i32) -> i32{
+        if self.conditions[&self.COND_GTE] == true {
+            self.PC = targ;
+        }
+        return 0;
+    }
+
+    //
+    //  CALL and RETURN
+    //
+
+    fn call(&mut self,targ:i32) {
+        // let r = self.registers.entry(self.REG_SP);
+        // r -= 4;
+        // let m = self.memory.entry(self.registers[&self.REG_SP]);
+        // m = self.PC;
+        self.registers.insert(self.REG_SP,self.registers[&self.REG_SP] - 4);
+        self.memory.insert(self.registers[&self.REG_SP],self.PC);
+        self.PC = targ;
+    }
+
+    fn ret(&mut self) {
+        self.PC = self.memory[&self.registers[&self.REG_SP]];
+        self.registers.insert(self.REG_SP,self.registers[&self.REG_SP] + 4);
+    }
+
+    //
+    //  STACK and related
+    //
+
+    fn push_r(&mut self,reg:u8) -> i32{
+        self.registers.insert(self.REG_SP,self.registers[&self.REG_SP] - 4);
+        self.memory.insert(self.registers[&self.REG_SP],self.registers[&reg]);
+        return 0;
+    }
+
+    fn push_m(&mut self,value:i32,reg1:u8,reg2:u8) -> i32 {
+        self.registers.insert(self.REG_SP,self.registers[&self.REG_SP] - 4);
+        let tmp = value + self.registers[&reg1] + self.registers[&reg2];
+
+        self.memory.insert(self.registers[&self.REG_SP],tmp);
+        return 0;
+    }
+
+    fn pop(&mut self) {
+        self.registers.insert(self.REG_SP,self.registers[&self.REG_SP] + 4);
+    }
+
+    fn pop_r(&mut self,dst:u8) {
+        self.registers.insert(dst,self.registers[&self.REG_SP]);
+        self.registers.insert(self.REG_SP,self.registers[&self.REG_SP] + 4);
+    }
+
+    //
+    // HELPER func for getarg
+    //
+
+    fn register_translate(&mut self,r:String) ->u8{
+        if self.regnames.contains_key(&r) {
+            return self.regnames[&r];
+        }
+        return 0;
+    }
+
+    // HELPER in parsing mov (quite primitive) and other ops
+    // returns: (value, type)
+    // where type is (TYPE_REGISTER, TYPE_IMMEDIATE, TYPE_MEMORY)
+    // 
+    // FORMATS
+    //    %ax           - register
+    //    $10           - immediate
+    //    10            - direct memory
+    //    10(%ax)       - memory + reg indirect
+    //    10(%ax,%bx)   - memory + 2 reg indirect
+    //    10(%ax,%bx,4) - XXX (not handled)
+    //
+
+    fn getarg(&mut self,arg:String) {
+
+    }
+
+    //
+    // LOAD a program into memory
+    // make it ready to execute
+    //
+
+    fn load(&mut self,infile:String,loadaddr:i32) {
+        
+    }
+
+
 }
 
 struct Proclist{
@@ -338,5 +566,6 @@ fn execute_x86_op(options:X86Option) {
     let verbose = options.verbose;
     let mut cpu = Cpu::new(memsize,memtrace,regtrace,cctrace,solve,verbose);
     cpu.init();
+
     println!("{:#?}",cpu);
 }
