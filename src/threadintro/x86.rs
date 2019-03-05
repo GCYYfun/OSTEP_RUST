@@ -47,7 +47,7 @@ struct Cpu {
     registers:HashMap<u8,i32>,
     conditions:HashMap<u8,bool>,
     labels:HashMap<i32,i32>,
-    vars:HashMap<i32,i32>,
+    vars:HashMap<String,i32>,
     memory:HashMap<i32,i32>,
     pmemory:HashMap<i32,i32>,
     condlist:Vec<u8>,
@@ -159,7 +159,7 @@ impl Cpu{
                  return rname.clone();
             }
         }
-        return "".into();
+        return "".to_string();
     }
 
     fn get_regnums(&mut self) ->Vec<u8>{
@@ -180,7 +180,7 @@ impl Cpu{
         return self.conditions[&cond];
     }
 
-    fn ge_pc(&self) -> i32{
+    fn get_pc(&mut self) -> i32{
         return self.PC;
     }
 
@@ -202,19 +202,19 @@ impl Cpu{
     //  INSTRUCTIONS
     // 
 
-    fn halt(&self) ->i32 {
+    fn halt(&mut self) ->i32 {
         return -1;
     }
 
-    fn iyield(&self) ->i32 {
+    fn iyield(&mut self) ->i32 {
         return -2;
     }
 
-    fn nop(&self) -> i32 {
+    fn nop(&mut self) -> i32 {
         return 0;
     }
 
-    fn rdump(&self) {
+    fn rdump(&mut self) {
         print!("REGISTERS::");
         print!("ax: {} ",self.registers[&self.REG_AX]);
         print!("bx: {} ",self.registers[&self.REG_BX]);
@@ -222,7 +222,7 @@ impl Cpu{
         print!("dx: {} ",self.registers[&self.REG_DX]);
     }
 
-    fn mdump(&self,index:i32) {
+    fn mdump(&mut self,index:i32) {
         println!("m[{}] {}",index,self.memory[&index]);
     }
 
@@ -439,9 +439,9 @@ impl Cpu{
     // HELPER func for getarg
     //
 
-    fn register_translate(&mut self,r:String) ->u8{
-        if self.regnames.contains_key(&r) {
-            return self.regnames[&r];
+    fn register_translate(&mut self,r:&String) ->u8{
+        if self.regnames.contains_key(r) {
+            return self.regnames[r];
         }
         return 0;
     }
@@ -459,8 +459,64 @@ impl Cpu{
     //    10(%ax,%bx,4) - XXX (not handled)
     //
 
-    fn getarg(&mut self,arg:String) {
+    fn getarg(&mut self,arg:&String) -> (String,String){
+        let mut tmp = arg.replace(",","");
+        tmp = tmp.trim().to_string();
+        if tmp.starts_with("$") {
+            assert!(tmp.len() == 2,"correct form is $number (not {})",tmp);
+            let value:Vec<&str> = tmp.split("$").collect();
+            let nope = value[1].parse::<i32>();
+            assert!(!nope.is_err());
+            return (value[1].into(),"TYPE_IMMEDIATE".into());
+        }else if tmp.starts_with("%"){
+            let register:Vec<&str> = tmp.split('%').collect();
+            return (self.register_translate(&register[1].to_string()).to_string(), "TYPE_REGISTER".to_string())
+        }else if tmp.starts_with("("){
+            let temp1:Vec<&str> = tmp.split("(").collect();
+            let temp2:Vec<&str> = temp1[1].split(")").collect();
+            let register:Vec<&str> = temp2[0].split("%").collect();
 
+            return (format!("{},{},{}",0, self.register_translate(&register[1].to_string()), self.register_translate(&"zero".to_string())),"TYPE_MEMORY".to_string());
+
+        }else if tmp.starts_with("."){
+            let targ = tmp;
+            return (targ,"TYPE_LABEL".to_string());
+        }else if tmp.is_ascii() && tmp.parse::<i32>().is_err(){             // alpha digital   not very corrcet
+            assert!(self.vars.contains_key(&tmp),"Variable {} is not declared" , tmp);
+            let b = self.vars[&tmp];
+            //return (format!("{},{},{}",&self.vars[&tmp],&self.register_translate(&"zero".to_string()),&self.register_translate(&"zero".to_string())),"TYPE_MEMORY".to_string());
+            return (format!("{},{},{}",b, self.register_translate(&"zero".to_string()), self.register_translate(&"zero".to_string())),"TYPE_MEMORY".to_string());
+        }else if !tmp.parse::<i32>().is_err() || tmp.starts_with("-") {
+           let mut neg = 1;
+           if tmp.starts_with("-") {
+               tmp = tmp[1..].to_string();
+               neg = -1;
+           }
+           let s:Vec<&str> = tmp.split("(").collect();
+           if s.len() == 1 {
+               let value = neg * tmp.parse::<i32>().unwrap();
+               return (format!("{},{},{}",value, self.register_translate(&"zero".to_string()), self.register_translate(&"zero".to_string())),"TYPE_MEMORY".to_string());
+           }else if s.len() == 2 {
+               let value = neg * s[0].parse::<i32>().unwrap();
+               let tt:Vec<&str> = s[1].split(")").collect();
+               let t:Vec<&str> = tt[0].split(",").collect();
+               if t.len() == 1 {
+                   let register:Vec<&str> = t[0].split("&").collect();
+                   return (
+                       format!("{},{},{}" , value, self.register_translate(&register[1].to_string()), self.register_translate(&"zero".to_string())), "TYPE_MEMORY".to_string()
+                       );
+               }else if t.len() == 2 {
+                   let register1:Vec<&str> = t[0].split("%").collect();
+                   let register2:Vec<&str> = t[1].split("%").collect();
+                   return (format!("{},{},{}",value,self.register_translate(&register1[1].to_string()), self.register_translate(&register2[1].to_string())),"TYPE_MEMORY".to_string());
+               }
+           }else {
+               println!(" mov : bad argument [{}]",tmp);
+               return ("".to_string(),"".to_string());
+           }
+        } 
+        println!(" mov : bad argument [{}]",tmp);
+        return ("".to_string(),"".to_string());
     }
 
     //
@@ -469,18 +525,263 @@ impl Cpu{
     //
 
     fn load(&mut self,infile:String,loadaddr:i32) {
+
+    }
+
+    //  END: load
+
+    fn print_headers(&mut self, mut procs:Proclist,cctrace:bool) {
+        if self.memtrace.len() > 0 {
+            for m in &self.memtrace {
+                let a = &m[0..1];
+                if !a.to_string().parse::<i32>().is_err() {
+                    print!("{}",m);
+                }else {
+                    assert!(self.vars.contains_key(m));
+                    print! ("{}" , m);
+                }
+            }
+        }
+
+        if self.regtrace.len() > 0 {
+            for r in self.regtrace.clone() {
+                let rn:u8 = r.parse().unwrap();
+                let s:String = self.get_regname(rn);
+                print! ("{}" , s);
+            }
+            println!("");
+        }
+
+        if cctrace == true{
+            print!(">= >  <= <  != =="); 
+        }
+
+        for i in 0..procs.getnum() {
+            print! ("       Thread {}         " , i);
+        }
+
+    }
+
+    fn print_trace(&mut self, newline:bool,cctrace:bool) {
+        if self.memtrace.len() > 0 {
+            for m in &self.memtrace {
+                if self.compute {
+                    let a = &m[0..1];
+                    if !a.to_string().parse::<i32>().is_err() {
+                        print!("{}",self.memory[&m.parse::<i32>().unwrap()]);
+                    }else {
+                        assert!(self.vars.contains_key(m));
+                        print! ("{}" , self.memory[&self.vars[m]]);
+                    }
+                }else {
+                    println!("?????");
+                }
+            }
+            println!("");
+        }
+
+        if self.regtrace.len() > 0 {
+            for r in self.regtrace.clone() {
+                if self.compute{
+                    println!("{}",self.registers[&r.parse::<u8>().unwrap()]);
+                }else{
+                    println!("?????");
+                }
+                println!("");
+            }
+            println!("");
+        }
+
+        if cctrace == true {
+            for c in self.condlist.clone() {
+                if self.compute {
+                    if self.conditions[&c]{
+                        print!("1");
+                    }else{
+                        print!("0");
+                    }
+                }else{
+                    print!("?");
+                }
+            }
+        }
+
+        if (self.memtrace.len(0) > 0 || self.regtrace.len() > 0 || cctrace == true) && newline == true{
+            println!("");
+        }
+            
+ 
         
+    }
+
+    fn setint(&mut self, intfreq:i32, intrand:bool) -> i32{
+        if intrand == false {
+            return intfreq;
+        }
+        let rand_x:f32 = rand::thread_rng().gen();
+        return (rand_x * intfreq as f32)as i32 + 1;
+    }
+
+    fn run(&mut self ,procs:Proclist,intfreq:i32,intrand:bool,cctrace:bool) {
+        let mut interrupt = self.setint(intfreq,intrand);
+        let mut icount = 0;
+
+        self.print_headers(procs,cctrace);
+        self.print_trace(true,cctrace);
+
+        loop {
+            let tid = procs.getcurr().gettid();
+
+            
+        }
+    }
+
+}
+
+struct Proclist{
+    plist:Vec<Process>,
+    curr:usize,
+    active:usize,
+}
+
+impl Proclist {
+    fn new() -> Proclist {
+        Proclist {
+            plist:Vec::new(),
+            curr:0,
+            active:0,
+        }
+    }
+
+    fn done(&mut self) {
+        self.plist[self.curr].setdone();
+        self.active -= 1;
+    }
+
+    fn numdone(&mut self) -> usize {
+        return self.plist.len() - self.active;
+    }
+
+    fn getnum(&mut self) -> usize {
+        return self.plist.len();
+    }
+
+    fn add(&mut self,p:Process) {
+        self.active += 1;
+        self.plist.push(p);
+    }
+
+    fn getcurr(&mut self) -> &Process{
+        return &self.plist[self.curr];
+    }
+
+    fn save(&mut self) {
+        self.plist[self.curr].save();
+    }
+
+    fn restore(&mut self) {
+        self.plist[self.curr].restore();
+    }
+
+    fn next(&mut self) {
+        for i in self.curr+1..self.plist.len() {
+            if self.plist[i].isdone() == false {
+                self.curr = i;
+                //return
+            }
+        }
+
+        for i in 0..self.curr+1 {
+            if self.plist[i].isdone() == false {
+                self.curr = i;
+                //return 
+            }
+        }
     }
 
 
 }
 
-struct Proclist{
-
+struct Process {
+    cpu:Cpu,
+    tid:usize,
+    pc:i32,
+    regs:HashMap<u8,i32>,
+    cc:HashMap<u8,bool>,
+    done:bool,
+    stack:i32,
 }
 
-struct Procsee {
+impl Process {
+    fn new(cpu:Cpu,tid:usize,pc:i32,stackbottom:i32) -> Process {
+        Process {
+            cpu:cpu,
+            tid:tid,
+            pc:pc,
+            regs:HashMap::new(),
+            cc:HashMap::new(),
+            done:false,
+            stack:stackbottom,
+        }
+    }
 
+    fn init(&mut self,reginit:String) {
+        for r in self.cpu.get_regnums() {
+            self.regs.entry(r).or_insert(0);
+        }
+
+        if reginit != "" {
+            let regsinitlist:Vec<&str> = reginit.split(":").collect();
+            for r in regsinitlist {
+                let tmp:Vec<&str> = r.split("=").collect();
+                assert!(tmp.len() == 2);
+                self.regs.entry(self.cpu.get_regnum(tmp[0].to_string())).or_insert(tmp[1].parse().unwrap());
+            }
+        }
+
+        for c in self.cpu.get_condlist() {
+            self.cc.entry(c).or_insert(false);
+        }
+
+        self.regs.insert(self.cpu.get_regnum("sp".to_string()),self.stack);
+
+    }
+
+    fn gettid (&mut self) -> usize {
+        return self.tid;
+    }
+
+    fn save(&mut self) {
+        self.pc = self.cpu.get_pc();
+
+        for c in self.cpu.get_condlist() {
+            self.cc.insert(c,self.cpu.get_cond(c));
+        }
+
+        for r in self.cpu.get_regnums() {
+            self.regs.insert(r,self.cpu.get_reg(r));
+        }
+    }
+
+    fn restore(&mut self) {
+        self.cpu.set_pc(self.pc);
+        for c in self.cpu.get_condlist() {
+            self.cpu.set_cond(c,self.cc[&c]);
+        }
+
+        for r in self.cpu.get_regnums() {
+            self.cpu.set_reg(r,self.regs[&r]);
+        }
+
+    }
+
+    fn setdone(&mut self) {
+        self.done = true;
+    }
+
+    fn isdone(&mut self) -> bool{
+        return self.done == true;
+    }
 }
 
 #[derive(Debug)]
@@ -549,9 +850,34 @@ pub fn x86_op_parse(op_vec:Vec<&str>) {
 
 fn execute_x86_op(options:X86Option) {
 
+
+    println! ("ARG seed {}",                options.seed);
+    println! ("ARG numthreads {}",          options.numthreads);
+    println! ("ARG program {}",             options.progfile);
+    println! ("ARG interrupt frequency {}", options.intfreq);
+    println! ("ARG interrupt randomness {}",options.intrand);
+    println! ("ARG argv {}",                options.argv);
+    println! ("ARG load address {}",        options.loadaddr);
+    println! ("ARG memsize {}",             options.memsize);
+    println! ("ARG memtrace {}",            options.memtrace);
+    println! ("ARG regtrace {}",            options.regtrace);
+    println! ("ARG cctrace {}",             options.cctrace);
+    println! ("ARG printstats {}",          options.printstats);
+    println! ("ARG verbose {}",             options.verbose);
+    println! ("");
+
     println!("{:?}",options);
 
+    let seed = options.seed;
+    let numthreads = options.numthreads;
+    let intfreq = options.intfreq;
+    let intrand = options.intrand;
+    let progfile = options.progfile;
+    let argv:Vec<&str> = options.argv.split(",").collect();
+
+    let loadaddr = options.loadaddr;
     let memsize    = options.memsize;
+
     let mut memtrace = vec![];
     if options.memtrace != "" {
         memtrace = options.memtrace.split(",").collect();
@@ -563,9 +889,48 @@ fn execute_x86_op(options:X86Option) {
 
     let cctrace = options.cctrace;
     let solve = options.solve;
+    let printstats = options.printstats;
     let verbose = options.verbose;
+
+
     let mut cpu = Cpu::new(memsize,memtrace,regtrace,cctrace,solve,verbose);
     cpu.init();
 
+    // cpu.load(profile,loadaddr);
     println!("{:#?}",cpu);
+
+    // process list
+
+    let mut procs = Proclist::new();
+
+    let mut pid = 0;
+
+    let mut stack = memsize * 1000;
+
+    for t in 0..numthreads {
+        let mut arg;
+        if argv.len() > 1 {
+            arg = argv[pid];
+        }else {
+            arg = argv[0];
+        }
+        let mut p =  Process::new(cpu, pid, loadaddr, stack);
+        p.init(arg.to_string());
+        procs.add(p);
+        stack -= 1000;
+        pid+=1;
+    }
+
+    procs.restore();
+
+    // time
+    // let t1;
+    // let ic;
+    // let t2;
+
+    // if printstats {
+    //     println!("");
+    //     println!("STATS:: Instructions    {}", ic);
+    //     println!("STATS:: Emulation Rate  {} kinst/sec", ic/(t2-t1)/1000);
+    // }
 }
