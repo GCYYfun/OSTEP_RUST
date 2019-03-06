@@ -45,6 +45,23 @@ impl Files {
 }
 
 
+struct Server{
+
+}
+
+struct FileDesc {
+
+}
+
+struct Cache {
+
+}
+
+struct client {
+    
+}
+
+
 
 
 struct AfsOption {

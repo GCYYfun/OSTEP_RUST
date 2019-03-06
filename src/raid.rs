@@ -18,7 +18,13 @@ fn convert (size:String) -> i32 {
     nsize
 }
 
+struct disk {
 
+}
+
+struct raid {
+    
+}
 
 
 
