@@ -55,7 +55,7 @@ struct Cpu {
     conditions:HashMap<u8,bool>,
     labels:HashMap<String,i32>,
     vars:HashMap<String,i32>,
-    memory:HashMap<i32,i32>,
+    memory:HashMap<i32,String>,
     pmemory:HashMap<i32,String>,
     condlist:Vec<u8>,
     regnums:Vec<u8>,
@@ -129,7 +129,7 @@ impl Cpu{
     //
     fn init_memory(&mut self){
         for i in 0..self.max_memory {
-            self.memory.entry(i).or_insert(0);
+            self.memory.entry(i).or_insert(0.to_string());
         }
     }
     fn init_registers(&mut self){
@@ -146,7 +146,7 @@ impl Cpu{
     fn dump_memory(&mut self){
         println!("MEMORY DUMP");
         for i in 0..self.max_memory {
-            if !self.pmemory.contains_key(&i) && self.memory.contains_key(&i) && self.memory[&i] != 0 {
+            if !self.pmemory.contains_key(&i) && self.memory.contains_key(&i) && self.memory[&i] != "0" {
                 println!(" m[{}] {}",i,self.memory[&i]);
             }
         }
@@ -242,18 +242,18 @@ impl Cpu{
 
     fn move_i_to_m(&mut self,src:i32,value:i32,reg1:u8,reg2:u8) -> i32{
         let tmp = value + self.registers[&reg1] + self.registers[&reg2];
-        self.memory.insert(tmp,src);
+        self.memory.insert(tmp,src.to_string());
         return 0;
     }
 
     fn move_m_to_r(&mut self,value:i32,reg1:u8,reg2:u8,dst:u8) {
         let tmp = value + self.registers[&reg1] + self.registers[&reg2];
-        self.registers.insert(dst,self.memory[&tmp]);
+        self.registers.insert(dst,self.memory[&tmp].parse::<i32>().unwrap());
     }
 
     fn move_r_to_m(&mut self,src:u8,value:i32,reg1:u8,reg2:u8) -> i32{
         let tmp = value + self.registers[&reg1] + self.registers[&reg2];
-        self.memory.insert(tmp,self.registers[&src]);
+        self.memory.insert(tmp,self.registers[&src].to_string());
         return 0;
     }
 
@@ -288,16 +288,16 @@ impl Cpu{
 
     fn atomic_exchange(&mut self,src:u8,value:i32,reg1:u8,reg2:u8) -> i32 {
         let tmp = value + self.registers[&reg1] + self.registers[&reg2];
-        let old = self.memory[&tmp];
-        self.memory.insert(tmp,self.registers[&src]);
+        let old = self.memory[&tmp].parse::<i32>().unwrap();
+        self.memory.insert(tmp,self.registers[&src].to_string());
         self.registers.insert(src,old);
         return 0;
     }
 
     fn fetchadd(&mut self,src:u8,value:i32,reg1:u8,reg2:u8) -> i32 {
         let tmp = value + self.registers[&reg1] + self.registers[&reg2];
-        let old = self.memory[&tmp];
-        self.memory.insert(tmp,self.memory[&tmp]+self.registers[&src]);
+        let old = self.memory[&tmp].parse::<i32>().unwrap();
+        self.memory.insert(tmp,(self.memory[&tmp].parse::<i32>().unwrap()+self.registers[&src]).to_string());
         self.registers.insert(src,old);
         return 0;
     }
@@ -406,12 +406,12 @@ impl Cpu{
         // let m = self.memory.entry(self.registers[&self.REG_SP]);
         // m = self.PC;
         self.registers.insert(self.REG_SP,self.registers[&self.REG_SP] - 4);
-        self.memory.insert(self.registers[&self.REG_SP],self.PC);
+        self.memory.insert(self.registers[&self.REG_SP],self.PC.to_string());
         self.PC = targ;
     }
 
     fn ret(&mut self) {
-        self.PC = self.memory[&self.registers[&self.REG_SP]];
+        self.PC = self.memory[&self.registers[&self.REG_SP]].parse::<i32>().unwrap();
         self.registers.insert(self.REG_SP,self.registers[&self.REG_SP] + 4);
     }
 
@@ -421,7 +421,7 @@ impl Cpu{
 
     fn push_r(&mut self,reg:u8) -> i32{
         self.registers.insert(self.REG_SP,self.registers[&self.REG_SP] - 4);
-        self.memory.insert(self.registers[&self.REG_SP],self.registers[&reg]);
+        self.memory.insert(self.registers[&self.REG_SP],self.registers[&reg].to_string());
         return 0;
     }
 
@@ -429,7 +429,7 @@ impl Cpu{
         self.registers.insert(self.REG_SP,self.registers[&self.REG_SP] - 4);
         let tmp = value + self.registers[&reg1] + self.registers[&reg2];
 
-        self.memory.insert(self.registers[&self.REG_SP],tmp);
+        self.memory.insert(self.registers[&self.REG_SP],tmp.to_string());
         return 0;
     }
 
@@ -620,6 +620,26 @@ impl Cpu{
                         let (src,stype) = self.getarg(&arg1.to_string());
                         let (dst,dtype) = self.getarg(&arg2.to_string());
                         println!("MOV {}:{} , {}:{}",src,stype,dst,dtype);
+
+                        if stype == "TYPE_MEMORY" || dtype == "TYPE_MEMORY" {
+                            println!("bad mov: two memory arguments");
+                            return;
+                        }else if stype == "TYPE_IMMEDIATE" && dtype == "TYPE_IMMEDIATE" {
+                            println!("bad mov: two immediate arguments");
+                            return ;
+                        }else if stype == "TYPE_IMMEDIATE" && dtype == "TYPE_REGISTER"{
+                            self.memory.insert(pc,format!("self.move_i_to_r({}, {})" ,src, dst));
+                        }else if stype == "TYPE_MEMORY" && dtype == "TYPE_REGISTER"{
+                            
+                        }else if stype == "TYPE_REGISTER" && dtype == "TYPE_MEMORY"{
+                            
+                        }else if stype == "TYPE_REGISTER" && dtype == "TYPE_REGISTER"{
+                            
+                        }else if stype == "TYPE_IMMEDIATE" && dtype == "TYPE_MEMORY"{
+                            
+                        }else {
+
+                        }
                     }else if opcode == "pop" {
 
                     }else if opcode == "push" {
@@ -792,13 +812,14 @@ impl Cpu{
             // FETCH
 
             let prevPC = self.PC;
-            let instruction = self.memory[&self.PC];
+            let instruction = &self.memory[&self.PC];
             self.PC += 1;
 
             // DECODE and EXECUTE
             // key: self.PC may be changed during eval; thus MUST be incremented BEFORE eval
 
-            let rc = -1;   // ????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
+            let rc = -1;
+            //let rc = eval(instruction);   // ????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
 
             //  tracing details: ALWAYS AFTER EXECUTION OF INSTRUCTION
             self.print_trace(false,cctrace);
