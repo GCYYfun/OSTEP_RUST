@@ -13,7 +13,12 @@ mod paging_policy;
 
 mod threadintro;
 
+mod disk;
+mod raid;
+
 mod vsfs;
+mod afs;
+
 
 use std::io;
 
@@ -69,9 +74,9 @@ fn parsing_op(op:&str) {
          "intro_x86" => threadintro::x86::x86_op_parse(op_vec),
          //"lock_x86" => threadintro::x86::x86_op_parse(op_vec),
          //  "disk" => 
-         //  "raid" =>
+         "raid" => raid::raid_op_parse(op_vec),
          "vsfs" => vsfs::vsfs_op_parse(op_vec),
-         // "afs" => 
+         "afs" => afs::afs_op_parse(op_vec),
          _ => println!("I dont know,what are you  talking about"),
      }
 }
