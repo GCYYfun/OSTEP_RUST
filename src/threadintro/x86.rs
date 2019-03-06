@@ -53,10 +53,10 @@ struct Cpu {
     PC:i32,
     registers:HashMap<u8,i32>,
     conditions:HashMap<u8,bool>,
-    labels:HashMap<i32,i32>,
+    labels:HashMap<String,i32>,
     vars:HashMap<String,i32>,
     memory:HashMap<i32,i32>,
-    pmemory:HashMap<i32,i32>,
+    pmemory:HashMap<i32,String>,
     condlist:Vec<u8>,
     regnums:Vec<u8>,
     regnames:HashMap<String,u8>,
@@ -542,21 +542,23 @@ impl Cpu{
 
             let file = BufReader::new(&fd);
             for line in file.lines() {
-                //println!("{}", &line.unwrap());
+                //println!("{}", line.unwrap());
                 let mut cline:String = line.unwrap().trim().to_string();
+                println!("pass 1 {}",cline);
                 let ctmp:Vec<&str> = cline.split("#").collect();
 
-                assert!(ctmp.len() == 1 || ctmp.len() ==2);
+                assert!(ctmp.len() == 1 || ctmp.len() ==2,"2");
 
                 if ctmp.len() == 2 {
                     cline = ctmp[0].to_string();
                 }
+                println!("3");
 
                 let tmp:Vec<&str> = cline.split(" ").collect();
                 if tmp.len() == 0 {
                     continue;
                 }
-
+                println!("4");
                 if tmp[0] == ".var" {
                     assert!(tmp.len() == 2);
                     assert!(!self.vars.contains_key(tmp[0]));
@@ -568,7 +570,7 @@ impl Cpu{
                     }
                 }else if tmp[0].starts_with(".") {
                     assert!(tmp.len() == 1);
-                    self.labels.insert(tmp[0].parse::<i32>().unwrap(),pc);
+                    self.labels.insert(tmp[0].to_string(),pc);
                     if self.verbose {
                         println!("ASSIGN LABEL {} -->{}" ,  tmp[0],pc);
                     }
@@ -579,14 +581,102 @@ impl Cpu{
             if self.verbose{
                 println!("");
             } 
+            println!("5");
         }
         {
-            let pc = loadaddr;
+            println!("6");
+            let mut pc = loadaddr;
             let path = Path::new(&infile);
             let fd = File::open(&path).expect("file not found");
             let file = BufReader::new(&fd);
             for line in file.lines() {
-                println!("{}", line.unwrap());
+                //println!("{}", line.unwrap());
+                let mut cline:String = line.unwrap().trim().to_string();
+                println!("pass 2 {}",cline);
+                let ctmp:Vec<&str> = cline.split("#").collect();
+                assert!(ctmp.len() == 1 || ctmp.len() ==2);
+
+                if ctmp.len() == 2 {
+                    cline = ctmp[0].to_string();
+                }
+
+                let tmp:Vec<&str> = cline.splitn(2," ").collect();
+                if tmp.len() == 0 {
+                    continue;
+                }
+
+
+                if !cline.starts_with(".") {
+                    let opcode = tmp[0];
+                    self.pmemory.insert(pc,cline.clone());
+
+                    // MAIN OPCODE LOOP
+
+                    if opcode == "mov" {
+                        let rtmp:Vec<&str> = tmp[1].splitn(2,",").collect();
+                        assert!(tmp.len() == 2 && rtmp.len() == 2,"mov: needs two args, separated by commas [{}]",cline);
+                        let arg1 = rtmp[0].trim();
+                        let arg2 = rtmp[1].trim();
+                        let (src,stype) = self.getarg(&arg1.to_string());
+                        let (dst,dtype) = self.getarg(&arg2.to_string());
+                        println!("MOV {}:{} , {}:{}",src,stype,dst,dtype);
+                    }else if opcode == "pop" {
+
+                    }else if opcode == "push" {
+                        
+                    }else if opcode == "call" {
+                        
+                    }else if opcode == "ret" {
+                        
+                    }else if opcode == "add" {
+                        
+                    }else if opcode == "sub" {
+                        
+                    }else if opcode == "fetchadd" {
+                        
+                    }else if opcode == "xchg" {
+                        
+                    }else if opcode == "test" {
+                        
+                    }else if opcode == "j" {
+                        
+                    }else if opcode == "jne" {
+                        
+                    }else if opcode == "je" {
+                        
+                    }else if opcode == "jlt" {
+                        
+                    }else if opcode == "jlte" {
+                        
+                    }else if opcode == "jgt" {
+                        
+                    }else if opcode == "jgte" {
+                        
+                    }else if opcode == "halt" {
+                        
+                    }else if opcode == "yield" {
+                        
+                    }else if opcode == "rdump" {
+                        
+                    }else if opcode == "mdump" {
+                        
+                    }else{
+
+                    }
+
+                    if self.verbose{
+                        println!("pc:{} LOADING {} --> %{}",pc, self.pmemory[&pc], self.memory[&pc]);
+                    } 
+
+                    pc+=1;
+                    
+                }
+
+
+
+
+
+
             }
             if self.verbose{
                 println!("");
