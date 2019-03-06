@@ -1,6 +1,12 @@
 use std::collections::HashMap;
 use rand::prelude::*;
-//
+
+use std::error::Error;
+use std::fs::File;
+use std::io::prelude::*;
+use std::path::Path;
+use std::io::{BufReader, BufRead};
+
 // HELPER
 //
 
@@ -18,6 +24,7 @@ fn zassert(cond:bool,s:String,)
         println!("exit()");
     }
 }
+#[derive(Clone)]
 #[derive(Debug)]
 struct Cpu {
     //condition
@@ -147,7 +154,7 @@ impl Cpu{
 
     // INFORMING ABOUT THE HARDWARE
 
-    fn get_regnum(&mut self, name:String) -> u8{
+    fn get_regnum(&self, name:String) -> u8{
         assert!(self.regnames.contains_key(&name));
         return self.regnames[&name];
     }
@@ -162,25 +169,25 @@ impl Cpu{
         return "".to_string();
     }
 
-    fn get_regnums(&mut self) ->Vec<u8>{
+    fn get_regnums(&self) ->Vec<u8>{
         return self.regnums.clone();
     }
 
-    fn get_condlist(&mut self) -> Vec<u8> {
+    fn get_condlist(&self) -> Vec<u8> {
         return self.condlist.clone();
     }
 
-    fn get_reg(&mut self,reg:u8) ->i32{
+    fn get_reg(& self,reg:u8) ->i32{
         assert!(self.regnums.contains(&reg));
         return self.registers[&reg];
     }
 
-    fn get_cond(&mut self,cond:u8) ->bool{
+    fn get_cond(& self,cond:u8) ->bool{
         assert!(self.condlist.contains(&cond));
         return self.conditions[&cond];
     }
 
-    fn get_pc(&mut self) -> i32{
+    fn get_pc(& self) -> i32{
         return self.PC;
     }
 
@@ -525,12 +532,71 @@ impl Cpu{
     //
 
     fn load(&mut self,infile:String,loadaddr:i32) {
+        {   
+            let mut pc = loadaddr;
+            let path = Path::new(&infile);
+            let fd = File::open(&path).expect("file not found");
 
+            let bpc = loadaddr;
+            let mut data = 100;
+
+            let file = BufReader::new(&fd);
+            for line in file.lines() {
+                //println!("{}", &line.unwrap());
+                let mut cline:String = line.unwrap().trim().to_string();
+                let ctmp:Vec<&str> = cline.split("#").collect();
+
+                assert!(ctmp.len() == 1 || ctmp.len() ==2);
+
+                if ctmp.len() == 2 {
+                    cline = ctmp[0].to_string();
+                }
+
+                let tmp:Vec<&str> = cline.split(" ").collect();
+                if tmp.len() == 0 {
+                    continue;
+                }
+
+                if tmp[0] == ".var" {
+                    assert!(tmp.len() == 2);
+                    assert!(!self.vars.contains_key(tmp[0]));
+                    self.vars.insert(tmp[1].to_string(),data);
+                    data += 4;
+                    assert!(data<bpc,"Load address overrun by static data");
+                    if self.verbose {
+                        println!("ASSIGN VAR {} -->{} {}" ,  tmp[0], tmp[1], self.vars[tmp[1]]);
+                    }
+                }else if tmp[0].starts_with(".") {
+                    assert!(tmp.len() == 1);
+                    self.labels.insert(tmp[0].parse::<i32>().unwrap(),pc);
+                    if self.verbose {
+                        println!("ASSIGN LABEL {} -->{}" ,  tmp[0],pc);
+                    }
+                }else {
+                    pc+=1;
+                }
+            }
+            if self.verbose{
+                println!("");
+            } 
+        }
+        {
+            let pc = loadaddr;
+            let path = Path::new(&infile);
+            let fd = File::open(&path).expect("file not found");
+            let file = BufReader::new(&fd);
+            for line in file.lines() {
+                println!("{}", line.unwrap());
+            }
+            if self.verbose{
+                println!("");
+            } 
+        }
     }
 
     //  END: load
 
-    fn print_headers(&mut self, mut procs:Proclist,cctrace:bool) {
+    fn print_headers(&mut self, procs:&mut Proclist,cctrace:bool) {
         if self.memtrace.len() > 0 {
             for m in &self.memtrace {
                 let a = &m[0..1];
@@ -606,7 +672,7 @@ impl Cpu{
             }
         }
 
-        if (self.memtrace.len(0) > 0 || self.regtrace.len() > 0 || cctrace == true) && newline == true{
+        if (self.memtrace.len() > 0 || self.regtrace.len() > 0 || cctrace == true) && newline == true{
             println!("");
         }
             
@@ -622,7 +688,7 @@ impl Cpu{
         return (rand_x * intfreq as f32)as i32 + 1;
     }
 
-    fn run(&mut self ,procs:Proclist,intfreq:i32,intrand:bool,cctrace:bool) {
+    fn run(&mut self ,mut procs:&mut Proclist,intfreq:i32,intrand:bool,cctrace:bool) ->i32 {
         let mut interrupt = self.setint(intfreq,intrand);
         let mut icount = 0;
 
@@ -630,7 +696,62 @@ impl Cpu{
         self.print_trace(true,cctrace);
 
         loop {
-            let tid = procs.getcurr().gettid();
+            //  need thread ID of current process
+            let tid = procs.getcurr().gettid() as i32;
+
+            // FETCH
+
+            let prevPC = self.PC;
+            let instruction = self.memory[&self.PC];
+            self.PC += 1;
+
+            // DECODE and EXECUTE
+            // key: self.PC may be changed during eval; thus MUST be incremented BEFORE eval
+
+            let rc = -1;   // ????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
+
+            //  tracing details: ALWAYS AFTER EXECUTION OF INSTRUCTION
+            self.print_trace(false,cctrace);
+
+            //  output: thread-proportional spacing followed by PC and instruction
+            dospace(tid);
+            println!("{}{}", prevPC,self.pmemory[&prevPC]);
+            icount += 1;
+
+            // halt instruction issueds
+
+            if rc == -1 {
+                procs.done();
+                if procs.numdone() == procs.getnum() {
+                    return icount;
+                }
+                procs.next();
+                procs.restore();
+
+                self.print_trace(false,cctrace);
+                
+
+                for i in 0..procs.getnum() {
+                    print! ("----- Halt;Switch ----- ");
+                }
+
+                println!("");
+            }
+
+            interrupt -= 1;
+
+            if interrupt == 0 || rc == -2 {
+                interrupt = self.setint(intfreq, intrand);
+                procs.save();
+                procs.next();
+                procs.restore();
+
+                self.print_trace(false,cctrace);
+                for i in 0..procs.getnum(){
+                    print! ("------ Interrupt ------ ");
+                }
+                println! ("");
+            }
 
             
         }
@@ -671,8 +792,9 @@ impl Proclist {
         self.plist.push(p);
     }
 
-    fn getcurr(&mut self) -> &Process{
-        return &self.plist[self.curr];
+    fn getcurr(&self) -> Process{
+        let p = self.plist[self.curr].clone();
+        return p;
     }
 
     fn save(&mut self) {
@@ -701,7 +823,7 @@ impl Proclist {
 
 
 }
-
+#[derive(Clone)]
 struct Process {
     cpu:Cpu,
     tid:usize,
@@ -866,7 +988,7 @@ fn execute_x86_op(options:X86Option) {
     println! ("ARG verbose {}",             options.verbose);
     println! ("");
 
-    println!("{:?}",options);
+    println!("{:#?}",options);
 
     let seed = options.seed;
     let numthreads = options.numthreads;
@@ -896,32 +1018,32 @@ fn execute_x86_op(options:X86Option) {
     let mut cpu = Cpu::new(memsize,memtrace,regtrace,cctrace,solve,verbose);
     cpu.init();
 
-    // cpu.load(profile,loadaddr);
-    println!("{:#?}",cpu);
+    cpu.load(progfile,loadaddr);
+    //println!("{:#?}",cpu);
 
     // process list
 
-    let mut procs = Proclist::new();
+    // let mut procs = Proclist::new();
 
-    let mut pid = 0;
+    // let mut pid = 0;
 
-    let mut stack = memsize * 1000;
+    // let mut stack = memsize * 1000;
 
-    for t in 0..numthreads {
-        let mut arg;
-        if argv.len() > 1 {
-            arg = argv[pid];
-        }else {
-            arg = argv[0];
-        }
-        let mut p =  Process::new(cpu, pid, loadaddr, stack);
-        p.init(arg.to_string());
-        procs.add(p);
-        stack -= 1000;
-        pid+=1;
-    }
+    // for t in 0..numthreads {
+    //     let mut arg;
+    //     if argv.len() > 1 {
+    //         arg = argv[pid];
+    //     }else {
+    //         arg = argv[0];
+    //     }
+    //     let mut p =  Process::new(cpu.clone(), pid, loadaddr, stack);
+    //     p.init(arg.to_string());
+    //     procs.add(p);
+    //     stack -= 1000;
+    //     pid+=1;
+    // }
 
-    procs.restore();
+    // procs.restore();
 
     // time
     // let t1;
