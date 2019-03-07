@@ -423,7 +423,7 @@ impl Raid{
         let bmap:fn(i32) -> (i32,i32);
         let pmap:fn(i32)->i32;
         if self.raidLevel == 4 {
-            //bmap = bmap4;
+            //bmap = bmap4;                                                                     ?????????? function pointer
             //pmap = pmap4;
         }else if self.raidLevel == 5 {
             //bmap = bmap5;
