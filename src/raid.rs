@@ -547,6 +547,22 @@ fn execute_raid_op(options:RaidOption) {
 
     let mut rng = SmallRng::from_seed(seed);
 
+
+    println!("ARG blockSize {}",BLOCKSIZE);
+    println!("ARG seed {}",options.seed);
+    println!("ARG numDisks {}",options.numDisks);
+    println!("ARG chunkSize {}",options.chunkSize);
+    println!("ARG numRequests {}",options.numRequests);
+    println!("ARG reqSize {}",options.size);
+    println!("ARG workload {}",options.workload);
+    println!("ARG writeFrac {}",options.writeFrac);
+    println!("ARG randRange {}",options.range);
+    println!("ARG level {}",options.level);
+    println!("ARG raid5 {}",options.raid5type);
+    println!("ARG reverse {}",options.reverse);
+    println!("ARG timing {}",options.timing);
+    println!("");
+
     let writeFrac = options.writeFrac as f64 / 100.0f64;
 
     assert!(writeFrac >= 0.0f64 && writeFrac<=1.0f64);
