@@ -1,3 +1,4 @@
+// done
 use rand::prelude::*;
 
 static BLOCKSIZE:i32 = 4096;
@@ -363,21 +364,67 @@ impl Raid{
         return (disk,off);
     }
 
-    fn pmap5(self, snum:i32)->i32{
+    fn pmap5(&self, snum:i32)->i32{
         let (disk, pdisk, off) = self.__bmap5(snum * self.blocksInStripe);
         return self.pdisk;
     }
 
 
     // RAID 4/5 helper routine to write out some blocks in a stripe
-    fn doPartialWrite(&mut self, stripe:i32, begin:i32, end:i32, bmap:fn(i32) -> (i32,i32), pmap:fn(i32)->i32) {
+    // fn doPartialWrite(&mut self, stripe:i32, begin:i32, end:i32, bmap:fn(i32) -> (i32,i32), pmap:fn(i32)->i32) {
+    //     let numWrites = end - begin;
+    //     let pdisk     = pmap(stripe);
+
+    //     if (numWrites + 1)<=(self.blocksInStripe - numWrites) {
+    //         let mut offList:Vec<i32> = Vec::new();
+    //         for voff in begin..end {
+    //             let (disk, off) = bmap(voff); 
+    //             self.doSingleRead(disk, off,false);
+    //             if !offList.contains(&off) {
+    //                 offList.push(off);
+    //             }
+    //             for i in 0..offList.len() {
+    //                 self.doSingleRead(pdisk, offList[i], i == (offList.len() - 1));
+    //             }
+    //         }   
+        
+    //     }else{
+    //         let stripeBegin = stripe * self.blocksInStripe;
+    //         let stripeEnd   = stripeBegin + self.blocksInStripe;
+    //         for voff in stripeBegin..begin {
+    //             let (disk, off) = bmap(voff); 
+    //             self.doSingleRead(disk, off, (voff == (begin - 1)) && (end == stripeEnd));
+    //         }
+    //         for voff in end..stripeEnd {
+    //             let (disk, off) = bmap(voff); 
+    //             self.doSingleRead(disk, off, voff == (stripeEnd - 1));
+    //         }
+    //     }
+
+    //     // WRITES: same for additive or subtractive parity
+    //     let mut offList:Vec<i32> = Vec::new();
+
+    //     for voff in begin..end {
+    //         let (disk, off) = bmap(voff);
+    //         self.doSingleWrite(disk, off,false);
+    //         if !offList.contains(&off) {
+    //             offList.push(off);
+    //         }
+    //     }
+
+    //     for i in 0..offList.len() {
+    //         self.doSingleWrite(pdisk, offList[i], i == (offList.len() - 1));
+    //     }
+    // }
+
+    fn doPartialWrite4(&mut self, stripe:i32, begin:i32, end:i32) {
         let numWrites = end - begin;
-        let pdisk     = pmap(stripe);
+        let pdisk     = self.pmap4(stripe);
 
         if (numWrites + 1)<=(self.blocksInStripe - numWrites) {
             let mut offList:Vec<i32> = Vec::new();
             for voff in begin..end {
-                let (disk, off) = bmap(voff); 
+                let (disk, off) = self.bmap4(voff); 
                 self.doSingleRead(disk, off,false);
                 if !offList.contains(&off) {
                     offList.push(off);
@@ -391,11 +438,11 @@ impl Raid{
             let stripeBegin = stripe * self.blocksInStripe;
             let stripeEnd   = stripeBegin + self.blocksInStripe;
             for voff in stripeBegin..begin {
-                let (disk, off) = bmap(voff); 
+                let (disk, off) = self.bmap4(voff); 
                 self.doSingleRead(disk, off, (voff == (begin - 1)) && (end == stripeEnd));
             }
             for voff in end..stripeEnd {
-                let (disk, off) = bmap(voff); 
+                let (disk, off) = self.bmap4(voff); 
                 self.doSingleRead(disk, off, voff == (stripeEnd - 1));
             }
         }
@@ -404,7 +451,53 @@ impl Raid{
         let mut offList:Vec<i32> = Vec::new();
 
         for voff in begin..end {
-            let (disk, off) = bmap(voff);
+            let (disk, off) = self.bmap4(voff);
+            self.doSingleWrite(disk, off,false);
+            if !offList.contains(&off) {
+                offList.push(off);
+            }
+        }
+
+        for i in 0..offList.len() {
+            self.doSingleWrite(pdisk, offList[i], i == (offList.len() - 1));
+        }
+    }
+
+    fn doPartialWrite5(&mut self, stripe:i32, begin:i32, end:i32) {
+        let numWrites = end - begin;
+        let pdisk     = self.pmap5(stripe);
+
+        if (numWrites + 1)<=(self.blocksInStripe - numWrites) {
+            let mut offList:Vec<i32> = Vec::new();
+            for voff in begin..end {
+                let (disk, off) = self.bmap5(voff); 
+                self.doSingleRead(disk, off,false);
+                if !offList.contains(&off) {
+                    offList.push(off);
+                }
+                for i in 0..offList.len() {
+                    self.doSingleRead(pdisk, offList[i], i == (offList.len() - 1));
+                }
+            }   
+        
+        }else{
+            let stripeBegin = stripe * self.blocksInStripe;
+            let stripeEnd   = stripeBegin + self.blocksInStripe;
+            for voff in stripeBegin..begin {
+                let (disk, off) = self.bmap5(voff); 
+                self.doSingleRead(disk, off, (voff == (begin - 1)) && (end == stripeEnd));
+            }
+            for voff in end..stripeEnd {
+                let (disk, off) = self.bmap5(voff); 
+                self.doSingleRead(disk, off, voff == (stripeEnd - 1));
+            }
+        }
+
+        // WRITES: same for additive or subtractive parity
+        let mut offList:Vec<i32> = Vec::new();
+
+        for voff in begin..end {
+            let (disk, off) = self.bmap5(voff);
             self.doSingleWrite(disk, off,false);
             if !offList.contains(&off) {
                 offList.push(off);
@@ -420,46 +513,114 @@ impl Raid{
     // RAID 4/5 enqueue routine
     fn enqueue45(&mut self,addr:i32,size:i32,isWrite:bool) {
 
-        let bmap:fn(i32) -> (i32,i32);
-        let pmap:fn(i32)->i32;
-        if self.raidLevel == 4 {
-            //bmap = bmap4;                                                                     ?????????? function pointer
+        //let bmap:fn(i32) -> (i32,i32);
+        //let pmap:fn(i32)->i32;
+        //if self.raidLevel == 4 {
+            //bmap = bmap4;                                                                     //?????????? function pointer
             //pmap = pmap4;
-        }else if self.raidLevel == 5 {
+        //}else if self.raidLevel == 5 {
             //bmap = bmap5;
             //pmap = pmap5;
-        }
+        //}
 
-        if isWrite == false {
-            for b in addr..addr+size {
-                //let (disk, off) = bmap(b);
-                //self.doSingleRead(disk, off,false);
+        // if isWrite == false {
+        //     for b in addr..addr+size {
+        //         //let (disk, off) = bmap(&self,b);
+        //         //self.doSingleRead(disk, off,false);
+        //     }
+        // }else {
+        //     let initStripe     = (addr)            / self.blocksInStripe;
+        //     let finalStripe    = (addr + size - 1) / self.blocksInStripe;
+
+        //     let mut left  = size;
+        //     let mut begin = addr;
+        //     let mut end;
+
+        //     for stripe in initStripe..finalStripe {
+        //         let endOfStripe = (stripe * self.blocksInStripe) + self.blocksInStripe;
+
+        //         if left >= self.blocksInStripe {
+        //             end = begin + self.blocksInStripe;
+        //         } else {
+        //             end = begin + left;
+        //         }
+
+        //         if end >= endOfStripe {
+        //             end = endOfStripe
+        //         }
+
+        //         //self.doPartialWrite(stripe, begin, end, bmap, pmap);
+
+        //         left -= (end - begin);
+        //         begin = end;
+        //     }
+        // }
+
+         if self.raidLevel == 4 {
+            if isWrite == false {
+                for b in addr..addr+size {
+                    let (disk, off) = self.bmap4(b);
+                    self.doSingleRead(disk, off,false);
+                }
+            }else {
+                let initStripe     = (addr)            / self.blocksInStripe;
+                let finalStripe    = (addr + size - 1) / self.blocksInStripe;
+
+                let mut left  = size;
+                let mut begin = addr;
+                let mut end;
+
+                for stripe in initStripe..finalStripe {
+                    let endOfStripe = (stripe * self.blocksInStripe) + self.blocksInStripe;
+
+                    if left >= self.blocksInStripe {
+                        end = begin + self.blocksInStripe;
+                    } else {
+                        end = begin + left;
+                    }
+
+                    if end >= endOfStripe {
+                        end = endOfStripe
+                    }
+
+                    self.doPartialWrite4(stripe, begin, end);
+
+                    left -= (end - begin);
+                    begin = end;
+                }
             }
-        }else {
-            let initStripe     = (addr)            / self.blocksInStripe;
-            let finalStripe    = (addr + size - 1) / self.blocksInStripe;
-
-            let mut left  = size;
-            let mut begin = addr;
-            let mut end;
-
-            for stripe in initStripe..finalStripe {
-                let endOfStripe = (stripe * self.blocksInStripe) + self.blocksInStripe;
-
-                if left >= self.blocksInStripe {
-                    end = begin + self.blocksInStripe;
-                } else {
-                    end = begin + left;
+        }else if self.raidLevel == 5 {
+            if isWrite == false {
+                for b in addr..addr+size {
+                    let (disk, off) = self.bmap5(b);
+                    self.doSingleRead(disk, off,false);
                 }
+            }else {
+                let initStripe     = (addr)            / self.blocksInStripe;
+                let finalStripe    = (addr + size - 1) / self.blocksInStripe;
 
-                if end >= endOfStripe {
-                    end = endOfStripe
+                let mut left  = size;
+                let mut begin = addr;
+                let mut end;
+
+                for stripe in initStripe..finalStripe {
+                    let endOfStripe = (stripe * self.blocksInStripe) + self.blocksInStripe;
+
+                    if left >= self.blocksInStripe {
+                        end = begin + self.blocksInStripe;
+                    } else {
+                        end = begin + left;
+                    }
+
+                    if end >= endOfStripe {
+                        end = endOfStripe
+                    }
+
+                    self.doPartialWrite5(stripe, begin, end);
+
+                    left -= (end - begin);
+                    begin = end;
                 }
-
-                //self.doPartialWrite(stripe, begin, end, bmap, pmap);
-
-                left -= (end - begin);
-                begin = end;
             }
         }
 
@@ -592,7 +753,8 @@ fn execute_raid_op(options:RaidOption) {
         println!("Only two types of RAID-5 supported: left-asymmetric (LA) and left-symmetric (LS) ({} is not)" , options.raid5type);
     }
 
-    //let mut r = 
+    let mut r = Raid::new(convert(options.chunkSize),options.numDisks,options.level,options.timing,options.reverse,options.solve,options.raid5type);
+    r.init();
 
     let mut off = 0;
 
@@ -607,13 +769,13 @@ fn execute_raid_op(options:RaidOption) {
         }
         let rand_y:f64 = rng.gen();
         if rand_y < writeFrac{
-            //r.enqueue(blk,size,true);
+            r.enqueue(blk,size,true);
         }else {
-            //r.enqueue(blk, size, false);
+            r.enqueue(blk, size, false);
         }
     }
 
-    //let t = r.go();
+    let t = r.go();
 
     if options.timing == false{
         println!(" ");
@@ -621,9 +783,9 @@ fn execute_raid_op(options:RaidOption) {
 
     if options.solve{
         println!("");
-        //r.stats(t)
+        r.stats(t);
         println!("");
-        //println!("STAT totalTime", t);
+        println!("STAT totalTime {}", t);
         println!("");
     }else{
         println!("");
