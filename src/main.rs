@@ -2,7 +2,7 @@ extern crate rand;
 
 mod process;
 mod scheduler;
-mod mlfq;
+// mod mlfq;
 mod lottery;
 mod relocation;
 mod segmentation;
@@ -45,7 +45,7 @@ fn start_os() {
 
         print!("your input op is : {}",op);
 
-        if op.trim() == "exit()"
+        if op.trim() == "exit"
         {
             break;
         }
@@ -61,9 +61,10 @@ fn parsing_op(op:&str) {
      //let mut s = Scheduler::new(process::Process_Switch_Behavior::SWITCH_ON_IO,process::IO_Done_Behavior::IO_RUN_LATER,100);
 
      match op_vec[0] {
+         "-h" => help_explain(),
          "process_run" => process::process_run_op_parse(op_vec),
          "scheduler" => scheduler::scheduler_op_parse(op_vec),
-         "mlfq" => mlfq::mlfq_op_parse(op_vec),
+         // "mlfq" => mlfq::mlfq_op_parse(op_vec),
          "lottery" => lottery::lottery_op_parse(op_vec),
          "relocation" => relocation::relocation_op_parse(op_vec),
          "segmentation" => segmentation::segmentation_op_parse(op_vec),
@@ -77,6 +78,12 @@ fn parsing_op(op:&str) {
          "raid" => raid::raid_op_parse(op_vec),
          "vsfs" => vsfs::vsfs_op_parse(op_vec),
          "afs" => afs::afs_op_parse(op_vec),
-         _ => println!("I dont know,what are you  talking about"),
+         _ => println!("I dont know,what are you talking about,please use '-h' for some help "),
      }
+}
+
+
+fn help_explain() {
+    let a = String::from("hello a");
+    println!("{}",a);
 }

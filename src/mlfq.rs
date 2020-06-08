@@ -300,7 +300,7 @@ fn execute_mlfq_op(options:MlfqOption) {
             finishedJobs += 1;
 
             job.get_mut(&currJob).unwrap().insert("endTime".to_string(),currTime);
-            done = queue[&currQueue].remove(0);
+            let done = queue[&currQueue].remove(0);
             
             assert!(done == currJob);
             continue;
