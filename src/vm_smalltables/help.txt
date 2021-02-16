@@ -1,0 +1,10 @@
+Usage: cargo run pmt [options]
+
+Options:
+  -h, --help            show this help message and exit
+  -s SEED, --seed=SEED  the random seed
+  -a ALLOCATED, --allocated=ALLOCATED
+                        number of virtual pages allocated
+  -n NUM, --addresses=NUM
+                        number of virtual addresses to generate
+  -c, --solve           compute answers for me

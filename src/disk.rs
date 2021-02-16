@@ -1,7 +1,0 @@
-struct Disk {
-
-}
-
-impl Disk {
-    
-}

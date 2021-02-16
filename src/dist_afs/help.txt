@@ -1,0 +1,28 @@
+Usage: cargo run afs [options]
+
+Options:
+  -h, --help            show this help message and exit
+  -s SEED, --seed=SEED  the random seed
+  -C NUMCLIENTS, --clients=NUMCLIENTS
+                        number of clients
+  -n NUMSTEPS, --numsteps=NUMSTEPS
+                        ops each client will do
+  -f NUMFILES, --numfiles=NUMFILES
+                        number of files in server
+  -r READRATIO, --readratio=READRATIO
+                        ratio of reads/writes
+  -A ACTIONS, --actions=ACTIONS
+                        client actions exactly specified, e.g.,
+                        oa1:r1:c1,oa1:w1:c1 specifies two clients; each opens
+                        the file a, client 0 reads it whereas client 1 writes
+                        it, and then each closes it
+  -S SCHEDULE, --schedule=SCHEDULE
+                        exact schedule to run; 01 alternates round robin
+                        between clients 0 and 1. Left unspecified leads to
+                        random scheduling
+  -p, --printstats      print extra stats
+  -c, --compute         compute answers for me
+  -d DETAIL, --detail=DETAIL
+                        detail level when giving answers (1:server
+                        actions,2:invalidations,4:client cache,8:extra
+                        labels); OR together for multiple

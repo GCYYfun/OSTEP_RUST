@@ -1,0 +1,29 @@
+
+Usage: cargo run malloc [options]
+
+Options:
+  -h, --help            show this help message and exit
+  -s SEED, --seed=SEED  the random seed
+  -S HEAPSIZE, --size=HEAPSIZE
+                        size of the heap
+  -b BASEADDR, --baseAddr=BASEADDR
+                        base address of heap
+  -H HEADERSIZE, --headerSize=HEADERSIZE
+                        size of the header
+  -a ALIGNMENT, --alignment=ALIGNMENT
+                        align allocated units to size; -1->no align
+  -p POLICY, --policy=POLICY
+                        list search (BEST, WORST, FIRST)
+  -l ORDER, --listOrder=ORDER
+                        list order (ADDRSORT, SIZESORT+, SIZESORT-, INSERT-
+                        FRONT, INSERT-BACK)
+  -C, --coalesce        coalesce the free list?
+  -n OPSNUM, --numOps=OPSNUM
+                        number of random ops to generate
+  -r OPSRANGE, --range=OPSRANGE
+                        max alloc size
+  -P OPSPALLOC, --percentAlloc=OPSPALLOC
+                        percent of ops that are allocs
+  -A OPSLIST, --allocList=OPSLIST
+                        instead of random, list of ops (+10,-0,etc)
+  -c, --compute         compute answers for me

@@ -1,0 +1,24 @@
+Usage: cargo run pp [options]
+
+Options:
+  -h, --help            show this help message and exit
+  -a ADDRESSES, --addresses=ADDRESSES
+                        a set of comma-separated pages to access; -1 means
+                        randomly generate
+  -f ADDRESSFILE, --addressfile=ADDRESSFILE
+                        a file with a bunch of addresses in it
+  -n NUMADDRS, --numaddrs=NUMADDRS
+                        if -a (--addresses) is -1, this is the number of addrs
+                        to generate
+  -p POLICY, --policy=POLICY
+                        replacement policy: FIFO, LRU, OPT, UNOPT, RAND, CLOCK
+  -b CLOCKBITS, --clockbits=CLOCKBITS
+                        for CLOCK policy, how many clock bits to use
+  -C CACHESIZE, --cachesize=CACHESIZE
+                        size of the page cache, in pages
+  -m MAXPAGE, --maxpage=MAXPAGE
+                        if randomly generating page accesses, this is the max
+                        page number
+  -s SEED, --seed=SEED  random number seed
+  -N, --notrace         do not print out a detailed trace
+  -c, --compute         compute answers for me

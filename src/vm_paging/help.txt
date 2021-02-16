@@ -1,0 +1,20 @@
+
+Usage: cargo run paging-linear-translate [options]
+
+Options:
+  -h, --help            show this help message and exit
+  -A ADDRESSES, --addresses=ADDRESSES
+                        a set of comma-separated pages to access; -1 means
+                        randomly generate
+  -s SEED, --seed=SEED  the random seed
+  -a ASIZE, --asize=ASIZE
+                        address space size (e.g., 16, 64k, 32m, 1g)
+  -p PSIZE, --physmem=PSIZE
+                        physical memory size (e.g., 16, 64k, 32m, 1g)
+  -P PAGESIZE, --pagesize=PAGESIZE
+                        page size (e.g., 4k, 8k, whatever)
+  -n NUM, --numaddrs=NUM
+                        number of virtual addresses to generate
+  -u USED, --used=USED  percent of virtual address space that is used
+  -v                    verbose mode
+  -c                    compute answers for me

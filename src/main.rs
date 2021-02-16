@@ -1,89 +1,75 @@
-extern crate rand;
+#![allow(dead_code)]
+use std::env;
 
-mod process;
-mod scheduler;
-// mod mlfq;
-mod lottery;
-mod relocation;
-mod segmentation;
-mod malloc;
-mod paging_linear_translate;
-mod paging_multilevel_translate;
-mod paging_policy;
+// CPU
+mod cpu_intro; // not done
+mod cpu_sched; // not done
+mod cpu_sched_lottery; // done
+// mod cpu_sched_mlfq;
 
-mod threadintro;
+// VM
+mod vm_beyondphys_policy; // done
+mod vm_freespace; // not done
+mod vm_mechanism; // done
+mod vm_paging; // done
+mod vm_segmentation; // done
+mod vm_smalltables; // done
 
-mod disk;
-mod raid;
-
-mod vsfs;
-mod afs;
-
-
-use std::io;
-
-
-
+// FILE
+mod dist_afs;
+mod file_implementation;
+mod file_raid;
 
 fn main() {
-    start_os();
-}
+    let args: Vec<String> = env::args().collect::<Vec<String>>();
+    let args: Vec<&str> = args.iter().map(AsRef::as_ref).collect();
 
-fn start_os() {
-
-    println!("Welcome to discrete OS");
-    
-    let stdin = io::stdin();
-
-    loop {
-
-        let mut op = String::new();
-
-        stdin.read_line(&mut op)
-        .ok()
-        .expect("Input Exception");
-
-        print!("your input op is : {}",op);
-
-        if op.trim() == "exit"
-        {
-            break;
-        }
-
-       parsing_op(&op);
-
-    
+    if args.len() < 2 {
+        println!("Nothing to do ,please use 'help' for some help ");
+        return ;
     }
-}
 
-fn parsing_op(op:&str) {
-     let op_vec:Vec<&str> = op.trim().split(" ").collect();
-     //let mut s = Scheduler::new(process::Process_Switch_Behavior::SWITCH_ON_IO,process::IO_Done_Behavior::IO_RUN_LATER,100);
-
-     match op_vec[0] {
-         "-h" => help_explain(),
-         "process_run" => process::process_run_op_parse(op_vec),
-         "scheduler" => scheduler::scheduler_op_parse(op_vec),
-         // "mlfq" => mlfq::mlfq_op_parse(op_vec),
-         "lottery" => lottery::lottery_op_parse(op_vec),
-         "relocation" => relocation::relocation_op_parse(op_vec),
-         "segmentation" => segmentation::segmentation_op_parse(op_vec),
-         "malloc" => malloc::malloc_op_parse(op_vec),
-         "plt" => paging_linear_translate::plt_op_parse(op_vec),
-         "pmt" => paging_multilevel_translate::pmt_op_parse(op_vec),
-         "pp" => paging_policy::pp_op_parse(op_vec),
-         "intro_x86" => threadintro::x86::x86_op_parse(op_vec),
-         //"lock_x86" => threadintro::x86::x86_op_parse(op_vec),
-         //  "disk" => 
-         "raid" => raid::raid_op_parse(op_vec),
-         "vsfs" => vsfs::vsfs_op_parse(op_vec),
-         "afs" => afs::afs_op_parse(op_vec),
-         _ => println!("I dont know,what are you talking about,please use '-h' for some help "),
-     }
-}
-
-
-fn help_explain() {
-    let a = String::from("hello a");
-    println!("{}",a);
+    match args[1] {
+        "help" => {}
+        "process_run" | "pr" => {
+            cpu_intro::parse_op(args);
+        }
+        "scheduler" => {
+            cpu_sched::parse_op(args);
+        }
+        "lottery" => {
+            cpu_sched_lottery::parse_op(args);
+        }
+        // "mlfq" => {
+        //     cpu_sched_mlfq::parse_op(args);
+        // }
+        "relocation" => {
+            vm_mechanism::parse_op(args);
+        }
+        "segmentation" => {
+            vm_segmentation::parse_op(args);
+        }
+        "malloc" => {
+            vm_freespace::parse_op(args);
+        }
+        "paging_linear_translate" | "plt" => {
+            vm_paging::parse_op(args);
+        }
+        "paging_multilevel_translate" | "pmt" => {
+            vm_smalltables::parse_op(args);
+        }
+        "paging_policy" | "pp" => {
+            vm_beyondphys_policy::parse_op(args);
+        }
+        "vsfs" => {
+            file_implementation::parse_op(args);
+        }
+        "raid" => {
+            file_raid::parse_op(args);
+        }
+        "afs" => {
+            dist_afs::parse_op(args);
+        }
+        _ => println!("I dont know,what are you talking about,please use '-h' for some help "),
+    }
 }

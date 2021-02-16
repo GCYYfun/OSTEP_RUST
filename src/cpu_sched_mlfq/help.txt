@@ -1,0 +1,14 @@
+Usage: cargo run vsfs [options]
+
+Options:
+  -h, --help            show this help message and exit
+  -s SEED, --seed=SEED  the random seed
+  -i NUMINODES, --numInodes=NUMINODES
+                        number of inodes in file system
+  -d NUMDATA, --numData=NUMDATA
+                        number of data blocks in file system
+  -n NUMREQUESTS, --numRequests=NUMREQUESTS
+                        number of requests to simulate
+  -r, --reverse         instead of printing state, print ops
+  -p, --printFinal      print the final set of files/dirs
+  -c, --compute         compute answers for me

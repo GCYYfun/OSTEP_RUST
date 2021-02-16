@@ -1,0 +1,27 @@
+
+Usage: cargo run raid [options]
+
+Options:
+  -h, --help            show this help message and exit
+  -s SEED, --seed=SEED  the random seed
+  -D NUMDISKS, --numDisks=NUMDISKS
+                        number of disks in RAID
+  -C CHUNKSIZE, --chunkSize=CHUNKSIZE
+                        chunk size of the RAID
+  -n NUMREQUESTS, --numRequests=NUMREQUESTS
+                        number of requests to simulate
+  -S SIZE, --reqSize=SIZE
+                        size of requests
+  -W WORKLOAD, --workload=WORKLOAD
+                        either "rand" or "seq" workloads
+  -w WRITEFRAC, --writeFrac=WRITEFRAC
+                        write fraction (100->all writes, 0->all reads)
+  -R RANGE, --randRange=RANGE
+                        range of requests (when using "rand" workload)
+  -L LEVEL, --level=LEVEL
+                        RAID level (0, 1, 4, 5)
+  -5 RAID5TYPE, --raid5=RAID5TYPE
+                        RAID-5 left-symmetric "LS" or left-asym "LA"
+  -r, --reverse         instead of showing logical ops, show physical
+  -t, --timing          use timing mode, instead of mapping mode
+  -c, --compute         compute answers for me

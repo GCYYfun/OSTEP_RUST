@@ -1,0 +1,20 @@
+
+Usage: cargo run segmentation [options]
+
+Options:
+  -h, --help            show this help message and exit
+  -s SEED, --seed=SEED  the random seed
+  -A ADDRESSES, --addresses=ADDRESSES
+                        a set of comma-separated pages to access; -1 means
+                        randomly generate
+  -a ASIZE, --asize=ASIZE
+                        address space size (e.g., 16, 64k, 32m, 1g)
+  -p PSIZE, --physmem=PSIZE
+                        physical memory size (e.g., 16, 64k, 32m, 1g)
+  -n NUM, --numaddrs=NUM
+                        number of virtual addresses to generate
+  -b BASE0, --b0=BASE0  value of segment 0 base register
+  -l LEN0, --l0=LEN0    value of segment 0 limit register
+  -B BASE1, --b1=BASE1  value of segment 1 base register
+  -L LEN1, --l1=LEN1    value of segment 1 limit register
+  -c                    compute answers for me

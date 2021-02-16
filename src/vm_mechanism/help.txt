@@ -1,0 +1,14 @@
+Usage: relocation [options]
+
+Options:
+  -h, --help            show this help message and exit
+  -s SEED, --seed=SEED  the random seed
+  -a ASIZE, --asize=ASIZE
+                        address space size (e.g., 16, 64k, 32m, 1g)
+  -p PSIZE, --physmem=PSIZE
+                        physical memory size (e.g., 16, 64k, 32m, 1g)
+  -n NUM, --addresses=NUM
+                        number of virtual addresses to generate
+  -b BASE, --b=BASE     value of base register
+  -l LIMIT, --l=LIMIT   value of limit register
+  -c, --compute         compute answers for me

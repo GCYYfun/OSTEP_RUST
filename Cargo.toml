@@ -5,4 +5,5 @@ authors = ["own"]
 edition = "2018"
 
 [dependencies]
-rand="0.6.5"
+rand="0.8.3"
+rand_chacha = "0.3.0"

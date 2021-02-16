@@ -1,0 +1,18 @@
+Usage: process-run [options]
+
+Usage: scheduler [options]
+
+Options:
+  -h, --help            show this help message and exit
+  -s SEED, --seed=SEED  the random seed
+  -j JOBS, --jobs=JOBS  number of jobs in the system
+  -l JLIST, --jlist=JLIST
+                        instead of random jobs, provide a comma-separated list
+                        of run times
+  -m MAXLEN, --maxlen=MAXLEN
+                        max length of job
+  -p POLICY, --policy=POLICY
+                        sched policy to use: SJF, FIFO, RR
+  -q QUANTUM, --quantum=QUANTUM
+                        length of time slice for RR policy
+  -c                    compute answers for me
