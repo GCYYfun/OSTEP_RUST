@@ -7,14 +7,14 @@ const HELP: &str = include_str!("help.txt");
 
 struct MlfqOption {
     seed: u64,
-    numQueues: i32,
+    num_queues: i32,
     quantum: i32,
-    quantumList: String,
-    numJobs: i32,
+    quantum_list: String,
+    num_jobs: i32,
     maxlen: i32,
     maxio: i32,
     boost: i32,
-    ioTime: i32,
+    io_time: i32,
     stay: bool,
     iobump: bool,
     jlist: String,
@@ -25,14 +25,14 @@ impl MlfqOption {
     fn new() -> MlfqOption {
         MlfqOption {
             seed: 0,
-            numQueues: 3,
+            num_queues: 3,
             quantum: 10,
-            quantumList: String::from(""),
-            numJobs: 3,
+            quantum_list: String::from(""),
+            num_jobs: 3,
             maxlen: 100,
             maxio: 10,
             boost: 0,
-            ioTime: 5,
+            io_time: 5,
             stay: false,
             iobump: false,
             jlist: String::from(""),
@@ -41,8 +41,8 @@ impl MlfqOption {
     }
 }
 
-fn FindQueue(queue: &HashMap<i32, Vec<i32>>, hiQueue: i32) -> i32 {
-    let mut q = hiQueue;
+fn find_queue(queue: &HashMap<i32, Vec<i32>>, hi_queue: i32) -> i32 {
+    let mut q = hi_queue;
     while q > 0 {
         if queue[&q].len() > 0 {
             return q;
@@ -70,7 +70,7 @@ pub fn parse_op(op_vec: Vec<&str>) {
                 i = i + 2;
             }
             "-n" => {
-                mlfq_op.numQueues = op_vec[i + 1].parse().unwrap();
+                mlfq_op.num_queues = op_vec[i + 1].parse().unwrap();
                 i = i + 2;
             }
             "-q" => {
@@ -78,11 +78,11 @@ pub fn parse_op(op_vec: Vec<&str>) {
                 i = i + 2;
             }
             "-Q" => {
-                mlfq_op.quantumList = op_vec[i + 1].to_string();
+                mlfq_op.quantum_list = op_vec[i + 1].to_string();
                 i = i + 2;
             }
             "-j" => {
-                mlfq_op.numJobs = op_vec[i + 1].parse().unwrap();
+                mlfq_op.num_jobs = op_vec[i + 1].parse().unwrap();
                 i = i + 2;
             }
             "-m" => {
@@ -98,7 +98,7 @@ pub fn parse_op(op_vec: Vec<&str>) {
                 i = i + 2;
             }
             "-i" => {
-                mlfq_op.ioTime = op_vec[i + 1].parse().unwrap();
+                mlfq_op.io_time = op_vec[i + 1].parse().unwrap();
                 i = i + 2;
             }
             "-S" => {
@@ -127,105 +127,105 @@ pub fn parse_op(op_vec: Vec<&str>) {
 }
 
 fn execute_mlfq_op(options: MlfqOption) {
-    let mut rng = rand_chacha::ChaCha8Rng::seed_from_u64(options.seed);
+    let _rng = rand_chacha::ChaCha8Rng::seed_from_u64(options.seed);
 
-    let numQueues = options.numQueues;
+    let num_queues = options.num_queues;
 
     let mut quantum: HashMap<i32, i32> = HashMap::new();
 
-    if options.quantumList != "" {
-        let quantumLengths: Vec<&str> = options.quantumList.split(",").collect();
-        let numQueues = quantumLengths.len();
-        let mut qc = numQueues - 1;
-        for i in 0..numQueues {
-            quantum.insert(qc as i32, quantumLengths[i].parse().unwrap());
+    if options.quantum_list != "" {
+        let quantum_lengths: Vec<&str> = options.quantum_list.split(",").collect();
+        let num_queues = quantum_lengths.len();
+        let mut qc = num_queues - 1;
+        for i in 0..num_queues {
+            quantum.insert(qc as i32, quantum_lengths[i].parse().unwrap());
             qc -= 1;
         }
     } else {
-        for i in 0..numQueues {
+        for i in 0..num_queues {
             quantum.insert(i, options.quantum);
         }
     }
 
-    let hiQueue = numQueues - 1;
+    let hi_queue = num_queues - 1;
 
-    let ioTime = options.ioTime;
+    let _io_time = options.io_time;
 
-    let mut ioDone: HashMap<i32, Vec<(i32, String)>> = HashMap::new();
+    let mut io_done: HashMap<i32, Vec<(i32, String)>> = HashMap::new();
 
     let mut job: HashMap<i32, HashMap<String, i32>> = HashMap::new();
 
-    let mut jobCnt = 0;
+    let mut job_cnt = 0;
 
     if options.jlist != "" {
-        let allJobs: Vec<&str> = options.jlist.split(":").collect();
-        for j in allJobs {
-            let jobInfo: Vec<&str> = j.split(",").collect();
-            if jobInfo.len() != 3 {
+        let all_jobs: Vec<&str> = options.jlist.split(":").collect();
+        for j in all_jobs {
+            let job_info: Vec<&str> = j.split(",").collect();
+            if job_info.len() != 3 {
                 //  not good;
             }
 
-            assert!(jobInfo.len() == 3);
+            assert!(job_info.len() == 3);
 
-            let startTime: i32 = jobInfo[0].parse().unwrap();
-            let runTime: i32 = jobInfo[1].parse().unwrap();
-            let ioFreq: i32 = jobInfo[2].parse().unwrap();
+            let start_time: i32 = job_info[0].parse().unwrap();
+            let run_time: i32 = job_info[1].parse().unwrap();
+            let io_freq: i32 = job_info[2].parse().unwrap();
 
-            let mut jobContent: HashMap<String, i32> = HashMap::new();
-            jobContent.insert("currPri".to_string(), hiQueue);
-            jobContent.insert("ticksLeft".to_string(), *quantum.get(&hiQueue).unwrap());
-            jobContent.insert("startTime".to_string(), startTime);
-            jobContent.insert("runTime".to_string(), runTime);
-            jobContent.insert("timeLeft".to_string(), runTime);
-            jobContent.insert("ioFreq".to_string(), ioFreq);
-            jobContent.insert("doingIO".to_string(), 0);
-            jobContent.insert("firstRun".to_string(), -1);
-            // {'currPri':hiQueue, 'ticksLeft':quantum[hiQueue], 'startTime':startTime,
-            //            'runTime':runTime, 'timeLeft':runTime, 'ioFreq':ioFreq, 'doingIO':False,
+            let mut job_content: HashMap<String, i32> = HashMap::new();
+            job_content.insert("currPri".to_string(), hi_queue);
+            job_content.insert("ticksLeft".to_string(), *quantum.get(&hi_queue).unwrap());
+            job_content.insert("start_time".to_string(), start_time);
+            job_content.insert("run_time".to_string(), run_time);
+            job_content.insert("timeLeft".to_string(), run_time);
+            job_content.insert("io_freq".to_string(), io_freq);
+            job_content.insert("doingIO".to_string(), 0);
+            job_content.insert("firstRun".to_string(), -1);
+            // {'currPri':hi_queue, 'ticksLeft':quantum[hi_queue], 'start_time':start_time,
+            //            'run_time':run_time, 'timeLeft':run_time, 'io_freq':io_freq, 'doingIO':False,
             //            'firstRun':-1}
 
-            job.insert(jobCnt, jobContent);
-            ioDone.entry(startTime).or_insert(Vec::new());
-            ioDone
-                .get_mut(&startTime)
+            job.insert(job_cnt, job_content);
+            io_done.entry(start_time).or_insert(Vec::new());
+            io_done
+                .get_mut(&start_time)
                 .unwrap()
-                .push((jobCnt, "JOB BEGINS".to_string()));
-            jobCnt += 1;
+                .push((job_cnt, "JOB BEGINS".to_string()));
+            job_cnt += 1;
         }
     } else {
-        for j in 0..options.numJobs {
-            let mut startTime = 0;
+        for _j in 0..options.num_jobs {
+            let start_time = 0;
             let rand_x: f64 = rand::thread_rng().gen();
-            let mut runTime = (rand_x * options.maxlen as f64) as i32;
+            let run_time = (rand_x * options.maxlen as f64) as i32;
             let rand_y: f64 = rand::thread_rng().gen();
-            let mut ioFreq = (rand_y * options.maxio as f64) as i32;
+            let io_freq = (rand_y * options.maxio as f64) as i32;
 
-            let mut jobContent: HashMap<String, i32> = HashMap::new();
-            jobContent.insert("currPri".to_string(), hiQueue);
-            jobContent.insert("ticksLeft".to_string(), *quantum.get(&hiQueue).unwrap());
-            jobContent.insert("startTime".to_string(), startTime);
-            jobContent.insert("runTime".to_string(), runTime);
-            jobContent.insert("timeLeft".to_string(), runTime);
-            jobContent.insert("ioFreq".to_string(), ioFreq);
-            jobContent.insert("doingIO".to_string(), 0);
-            jobContent.insert("firstRun".to_string(), -1);
+            let mut job_content: HashMap<String, i32> = HashMap::new();
+            job_content.insert("currPri".to_string(), hi_queue);
+            job_content.insert("ticksLeft".to_string(), *quantum.get(&hi_queue).unwrap());
+            job_content.insert("start_time".to_string(), start_time);
+            job_content.insert("run_time".to_string(), run_time);
+            job_content.insert("timeLeft".to_string(), run_time);
+            job_content.insert("io_freq".to_string(), io_freq);
+            job_content.insert("doingIO".to_string(), 0);
+            job_content.insert("firstRun".to_string(), -1);
 
-            job.insert(jobCnt, jobContent);
+            job.insert(job_cnt, job_content);
 
-            ioDone.entry(startTime).or_insert(Vec::new());
-            ioDone
-                .get_mut(&startTime)
+            io_done.entry(start_time).or_insert(Vec::new());
+            io_done
+                .get_mut(&start_time)
                 .unwrap()
-                .push((jobCnt, "JOB BEGINS".to_string()));
-            jobCnt += 1;
+                .push((job_cnt, "JOB BEGINS".to_string()));
+            job_cnt += 1;
         }
     }
 
-    let numJobs = job.len();
+    let num_jobs = job.len();
 
     println!("Here is the list of inputs:");
-    println!("OPTIONS jobs {}", numJobs);
-    println!("OPTIONS queues {}", numQueues);
+    println!("OPTIONS jobs {}", num_jobs);
+    println!("OPTIONS queues {}", num_queues);
     for i in quantum.len() - 1..0 {
         println!(
             "OPTIONS quantum length for queue {} is {}",
@@ -235,25 +235,25 @@ fn execute_mlfq_op(options: MlfqOption) {
     }
 
     println!("OPTIONS boost {}", options.boost);
-    println!("OPTIONS ioTime {}", options.ioTime);
+    println!("OPTIONS io_time {}", options.io_time);
     println!("OPTIONS stayAfterIO {}", options.stay);
     println!("OPTIONS iobump {}", options.iobump);
 
     println!("");
     println!("For each job, three defining characteristics are given:");
-    println!("  startTime : at what time does the job enter the system");
-    println!("  runTime   : the total CPU time needed by the job to finish");
-    println!("  ioFreq    : every ioFreq time units, the job issues an I/O");
-    println!("              (the I/O takes ioTime units to complete)");
+    println!("  start_time : at what time does the job enter the system");
+    println!("  run_time   : the total CPU time needed by the job to finish");
+    println!("  io_freq    : every io_freq time units, the job issues an I/O");
+    println!("              (the I/O takes io_time units to complete)");
 
     println!("Job List:");
-    for i in 0..numJobs {
+    for i in 0..num_jobs {
         println!(
-            "  Job {}: startTime {} - runTime {} - ioFreq {}",
+            "  Job {}: start_time {} - run_time {} - io_freq {}",
             i,
-            job[&(i as i32)]["startTime"],
-            job[&(i as i32)]["runTime"],
-            job[&(i as i32)]["ioFreq"]
+            job[&(i as i32)]["start_time"],
+            job[&(i as i32)]["run_time"],
+            job[&(i as i32)]["io_freq"]
         );
     }
 
@@ -269,57 +269,57 @@ fn execute_mlfq_op(options: MlfqOption) {
 
     let mut queue: HashMap<i32, Vec<i32>> = HashMap::new();
 
-    for q in 0..numQueues {
+    for q in 0..num_queues {
         queue.entry(q).or_insert(Vec::new());
     }
 
-    let mut currTime = 0;
+    let mut curr_time = 0;
 
-    let totalJobs = job.len();
+    let total_jobs = job.len();
 
-    let mut finishedJobs = 0;
+    let mut finished_jobs = 0;
     println!("");
     println!("Execution Trace:");
 
-    while finishedJobs < totalJobs {
-        if options.boost > 0 && currTime != 0 {
-            if currTime % options.boost == 0 {
-                println!("[ time {} ] BOOST ( every {} )", currTime, options.boost);
+    while finished_jobs < total_jobs {
+        if options.boost > 0 && curr_time != 0 {
+            if curr_time % options.boost == 0 {
+                println!("[ time {} ] BOOST ( every {} )", curr_time, options.boost);
 
-                for q in 0..numQueues - 1 {
+                for q in 0..num_queues - 1 {
                     let vs = queue.get_mut(&(q as i32)).unwrap().clone();
                     for j in vs {
                         if job[&(j as i32)]["doingIO"] == 0 {
-                            queue.get_mut(&hiQueue).unwrap().push(j as i32);
+                            queue.get_mut(&hi_queue).unwrap().push(j as i32);
                         }
                     }
                     queue.entry(q).or_insert(Vec::new());
                 }
 
-                for j in 0..numJobs {
+                for j in 0..num_jobs {
                     if job[&(j as i32)]["timeLeft"] > 0 {
                         job.get_mut(&(j as i32))
                             .unwrap()
-                            .insert("currPri".to_string(), hiQueue);
+                            .insert("currPri".to_string(), hi_queue);
                         job.get_mut(&(j as i32))
                             .unwrap()
-                            .insert("ticksLeft".to_string(), quantum[&hiQueue]);
-                        // job[&(j as i32)]["currPri"]   = hiQueue
-                        // job[&(j as i32)]["ticksLeft"] = quantum[&hiQueue]
+                            .insert("ticksLeft".to_string(), quantum[&hi_queue]);
+                        // job[&(j as i32)]["currPri"]   = hi_queue
+                        // job[&(j as i32)]["ticksLeft"] = quantum[&hi_queue]
                     }
                 }
             }
         }
 
-        if ioDone.contains_key(&currTime) {
-            for t in &ioDone[&currTime] {
+        if io_done.contains_key(&curr_time) {
+            for t in &io_done[&curr_time] {
                 let j = t.0;
                 let typei: String = t.1.clone();
                 let q = job[&j]["currPri"];
                 job.get_mut(&(j as i32))
                     .unwrap()
                     .insert("doingIO".to_string(), 0);
-                println!("[ time {} ] {} by JOB {}", currTime, typei, j);
+                println!("[ time {} ] {} by JOB {}", curr_time, typei, j);
 
                 if options.iobump == false {
                     queue.get_mut(&q).unwrap().push(j);
@@ -329,48 +329,51 @@ fn execute_mlfq_op(options: MlfqOption) {
             }
         }
 
-        let currQueue = FindQueue(&queue, hiQueue);
+        let curr_queue = find_queue(&queue, hi_queue);
 
-        if currQueue == -1 {
-            println!("[ time {} ] IDLE", currTime);
-            currTime += 1;
+        if curr_queue == -1 {
+            println!("[ time {} ] IDLE", curr_time);
+            curr_time += 1;
             continue;
         }
 
-        let currJob = queue[&currQueue][0];
+        let curr_job = queue[&curr_queue][0];
 
-        *job.get_mut(&currJob).unwrap().get_mut("timeLeft").unwrap() -= 1;
-        *job.get_mut(&currJob).unwrap().get_mut("ticksLeft").unwrap() -= 1;
+        *job.get_mut(&curr_job).unwrap().get_mut("timeLeft").unwrap() -= 1;
+        *job.get_mut(&curr_job)
+            .unwrap()
+            .get_mut("ticksLeft")
+            .unwrap() -= 1;
 
-        if job[&currJob]["firstRun"] == -1 {
-            *job.get_mut(&currJob).unwrap().get_mut("firstRun").unwrap() = currTime;
+        if job[&curr_job]["firstRun"] == -1 {
+            *job.get_mut(&curr_job).unwrap().get_mut("firstRun").unwrap() = curr_time;
         }
 
-        let mut runTime = job[&currJob]["runTime"];
-        let mut ioFreq = job[&currJob]["ioFreq"];
-        let mut ticksLeft = job[&currJob]["ticksLeft"];
-        let mut timeLeft = job[&currJob]["timeLeft"];
+        let run_time = job[&curr_job]["run_time"];
+        let _io_freq = job[&curr_job]["io_freq"];
+        let ticks_left = job[&curr_job]["ticksLeft"];
+        let time_left = job[&curr_job]["timeLeft"];
 
         println!(
-            "[ time {} ] Run JOB {} at PRIORITY {} [ TICKSLEFT {} RUNTIME {} TIMELEFT {} ]",
-            currTime, currJob, currQueue, ticksLeft, runTime, timeLeft
+            "[ time {} ] Run JOB {} at PRIORITY {} [ TICKSLEFT {} run_time {} TIMELEFT {} ]",
+            curr_time, curr_job, curr_queue, ticks_left, run_time, time_left
         );
 
-        currTime += 1;
+        curr_time += 1;
 
-        if timeLeft == 0 {
-            println!("[ time {} ] FINISHED JOB {}", currTime, currJob);
-            finishedJobs += 1;
+        if time_left == 0 {
+            println!("[ time {} ] FINISHED JOB {}", curr_time, curr_job);
+            finished_jobs += 1;
 
-            job.get_mut(&currJob)
+            job.get_mut(&curr_job)
                 .unwrap()
-                .insert("endTime".to_string(), currTime);
-            let done = queue[&currQueue].remove(0);
+                .insert("endTime".to_string(), curr_time);
+            // let done = queue[&currQueue].remove(0);
 
-            assert!(done == currJob);
+            // assert!(done == currJob);
             continue;
         }
 
-        let mut issuedIO = false;
+        let _issued_io = false;
     }
 }

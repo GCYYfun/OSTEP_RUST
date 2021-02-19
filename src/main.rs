@@ -1,11 +1,12 @@
 #![allow(dead_code)]
+#![allow(mutable_borrow_reservation_conflict)] // 危险
 use std::env;
 
 // CPU
 mod cpu_intro; // not done
 mod cpu_sched; // not done
 mod cpu_sched_lottery; // done
-// mod cpu_sched_mlfq;
+mod cpu_sched_mlfq; // not done
 
 // VM
 mod vm_beyondphys_policy; // done
@@ -26,7 +27,7 @@ fn main() {
 
     if args.len() < 2 {
         println!("Nothing to do ,please use 'help' for some help ");
-        return ;
+        return;
     }
 
     match args[1] {
@@ -40,9 +41,9 @@ fn main() {
         "lottery" => {
             cpu_sched_lottery::parse_op(args);
         }
-        // "mlfq" => {
-        //     cpu_sched_mlfq::parse_op(args);
-        // }
+        "mlfq" => {
+            cpu_sched_mlfq::parse_op(args);
+        }
         "relocation" => {
             vm_mechanism::parse_op(args);
         }

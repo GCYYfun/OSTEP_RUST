@@ -74,9 +74,43 @@ impl Scheduler {
         proc_id
     }
 
+    fn load_program(&mut self, program: &str) {
+        let proc_id = self.new_process();
+        let tmp: Vec<&str> = program.split(",").collect();
+        for line in tmp {
+            if line.starts_with("c") {
+                let num = line.get(1..).unwrap().len();
+                for _i in 0..num {
+                    self.process_info
+                        .get_mut(&proc_id)
+                        .unwrap()
+                        .get_mut(&(PROC_CODE.to_string()))
+                        .unwrap()
+                        .push(DO_COMPUTE.to_string());
+                }
+            } else if line.starts_with("i") {
+                self.process_info
+                    .get_mut(&proc_id)
+                    .unwrap()
+                    .get_mut(&(PROC_CODE.to_string()))
+                    .unwrap()
+                    .push(DO_IO.to_string());
+                self.process_info
+                    .get_mut(&proc_id)
+                    .unwrap()
+                    .get_mut(&(PROC_CODE.to_string()))
+                    .unwrap()
+                    .push(DO_IO_DONE.to_string());
+            } else {
+                println!("bad opcode {} (should be c or i)", line);
+                return;
+            }
+        }
+    }
+
     fn load(&mut self, program_description: &str) {
         let proc_id = self.new_process();
-        let tmp: Vec<&str> = program_description.split(':').collect();
+        let tmp: Vec<&str> = program_description.split(":").collect();
         if tmp.len() != 2 {
             println!("Bad description (%s): Must be number <x:y>");
             println!("where X is the number of instructions");
@@ -364,6 +398,7 @@ impl Scheduler {
 
 struct ProcessOption {
     seed: u64,
+    program: String,
     process_list: String,
     io_length: i32,
     process_switch_behavior: String,
@@ -376,6 +411,7 @@ impl ProcessOption {
     fn new() -> ProcessOption {
         ProcessOption {
             seed: 0,
+            program: String::from(""),
             process_list: String::from(""),
             io_length: 5,
             process_switch_behavior: String::from(SCHED_SWITCH_ON_IO),
@@ -395,19 +431,23 @@ pub fn parse_op(op_vec: Vec<&str>) {
                 print!("{}", HELP);
                 return;
             }
-            "-s" | "SEED" => {
+            "-s" | "--seed" => {
                 proc_op.seed = op_vec[i + 1].parse().unwrap();
                 i = i + 2;
             }
-            "-l" | "PROCESS_LIST" => {
+            "-P" | "--program" => {
+                proc_op.program = op_vec[i + 1].to_string();
+                i = i + 2;
+            }
+            "-l" | "--processlist" => {
                 proc_op.process_list = op_vec[i + 1].to_string();
                 i = i + 2;
             }
-            "-L" | "IO_LENGTH" => {
+            "-L" | "--iolength" => {
                 proc_op.io_length = op_vec[i + 1].parse().unwrap();
                 i = i + 2;
             }
-            "-S" | "PROCESS_SWITCH_BEHAVIOR" => {
+            "-S" | "--switch" => {
                 match op_vec[i + 1] {
                     SCHED_SWITCH_ON_IO => {
                         proc_op.process_switch_behavior = SCHED_SWITCH_ON_IO.to_string()
@@ -419,7 +459,7 @@ pub fn parse_op(op_vec: Vec<&str>) {
                 }
                 i = i + 2;
             }
-            "-I" | "IO_DONE_BEHAVIOR" => {
+            "-I" | "--iodone" => {
                 match op_vec[i + 1] {
                     IO_RUN_LATER => proc_op.io_done_behavior = IO_RUN_LATER.to_string(),
                     IO_RUN_IMMEDIATE => proc_op.io_done_behavior = IO_RUN_IMMEDIATE.to_string(),
@@ -443,7 +483,7 @@ pub fn parse_op(op_vec: Vec<&str>) {
     }
 
     println!(
-        "{},{},{},{},{}",
+        "ARGS:↓\n\nseed:{},\nprocess_list:{},\nio_length:{},\nsolve:{},\nprint_stats:{}\n",
         proc_op.seed, proc_op.process_list, proc_op.io_length, proc_op.solve, proc_op.print_stats
     );
 
@@ -452,15 +492,47 @@ pub fn parse_op(op_vec: Vec<&str>) {
 
 fn execute_process_op(options: ProcessOption) {
     let mut s = Scheduler::new(
-        options.process_switch_behavior,
-        options.io_done_behavior,
+        options.process_switch_behavior.clone(),
+        options.io_done_behavior.clone(),
         options.io_length,
     );
-    for p in options.process_list.split(",") {
-        s.load(p);
+
+    if options.program != "".to_string() {
+        for p in options.program.split(":") {
+            s.load_program(p);
+        }
+    } else {
+        for p in options.process_list.split(",") {
+            s.load(p);
+        }
     }
 
-    if options.solve == false {} // not done
+    if options.solve == false {
+        println!("Produce a trace of what would happen when you run these processes:");
+        for pid in 0..s.get_num_processes() {
+            println!("Process {} ", pid);
+            for inst in 0..s.get_num_instructions(pid as i32) {
+                println!(" {} ", s.get_instructions(pid as i32, inst));
+            }
+            println!();
+        }
+        println!("Important behaviors:");
+        print!("  System will switch when ");
+        if SCHED_SWITCH_ON_IO == options.process_switch_behavior {
+            println!("the current process is FINISHED or ISSUES AN IO");
+        } else {
+            println!("the current process is FINISHED");
+        }
+
+        print!("  After IOs, the process issuing the IO will ");
+        if options.io_done_behavior == IO_RUN_IMMEDIATE {
+            println!("run IMMEDIATELY");
+        } else {
+            println!("run LATER (when it is its turn)")
+        }
+        println!();
+        return;
+    }
 
     let (cpu_busy, io_busy, clock_tick) = s.run();
 

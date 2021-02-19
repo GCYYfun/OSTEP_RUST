@@ -25,131 +25,131 @@ fn convert(size: String) -> i32 {
 }
 
 struct Disk {
-    seekTime: i32,
-    xferTime: f64,
+    seek_time: i32,
+    xfer_time: f64,
     // length of scheduling queue
-    queueLen: i32,
-    currAddr: i32,
+    queue_len: i32,
+    curr_addr: i32,
     //queue:Vec<>,
 
     // disk geometry
-    numTracks: i32,
-    blocksPerTrack: i32,
-    blocksPerDisk: i32,
+    num_tracks: i32,
+    blocks_per_track: i32,
+    blocks_per_disk: i32,
 
     // stats
-    countIO: i32,
-    countSeq: i32,
-    countNseq: i32,
-    countRand: i32,
-    utilTime: f64,
+    count_io: i32,
+    count_seq: i32,
+    count_nseq: i32,
+    count_rand: i32,
+    util_time: f64,
 }
 
 impl Disk {
     fn new() -> Disk {
         Disk {
-            seekTime: 10,
-            xferTime: 0.1,
+            seek_time: 10,
+            xfer_time: 0.1,
             // length of scheduling queue
-            queueLen: 8,
-            currAddr: -10000,
+            queue_len: 8,
+            curr_addr: -10000,
             //queue:Vec<>,
 
             // disk geometry
-            numTracks: 100,
-            blocksPerTrack: 100,
-            blocksPerDisk: 10000,
+            num_tracks: 100,
+            blocks_per_track: 100,
+            blocks_per_disk: 10000,
 
             // stats
-            countIO: 0,
-            countSeq: 0,
-            countNseq: 0,
-            countRand: 0,
-            utilTime: 0.0,
+            count_io: 0,
+            count_seq: 0,
+            count_nseq: 0,
+            count_rand: 0,
+            util_time: 0.0,
         }
     }
-    fn new_a(seekTime: i32, xferTime: f64, queueLen: i32) -> Disk {
+    fn new_a(seek_time: i32, xfer_time: f64, queue_len: i32) -> Disk {
         Disk {
-            seekTime: seekTime,
-            xferTime: xferTime,
+            seek_time: seek_time,
+            xfer_time: xfer_time,
             // length of scheduling queue
-            queueLen: queueLen,
-            currAddr: -10000,
+            queue_len: queue_len,
+            curr_addr: -10000,
             //queue:Vec<>,
 
             // disk geometry
-            numTracks: 100,
-            blocksPerTrack: 100,
-            blocksPerDisk: 10000,
+            num_tracks: 100,
+            blocks_per_track: 100,
+            blocks_per_disk: 10000,
 
             // stats
-            countIO: 0,
-            countSeq: 0,
-            countNseq: 0,
-            countRand: 0,
-            utilTime: 0.0,
+            count_io: 0,
+            count_seq: 0,
+            count_nseq: 0,
+            count_rand: 0,
+            util_time: 0.0,
         }
     }
 
     fn stats(&self) -> (i32, i32, i32, i32, f64) {
         return (
-            self.countIO,
-            self.countSeq,
-            self.countNseq,
-            self.countRand,
-            self.utilTime,
+            self.count_io,
+            self.count_seq,
+            self.count_nseq,
+            self.count_rand,
+            self.util_time,
         );
     }
 
     fn enqueue(&mut self, addr: i32) {
-        assert!(addr < self.blocksPerDisk);
+        assert!(addr < self.blocks_per_disk);
 
-        self.countIO += 1;
+        self.count_io += 1;
 
-        let currTrack = self.currAddr / self.numTracks;
+        let curr_track = self.curr_addr / self.num_tracks;
 
-        let newTrack = addr / self.numTracks;
+        let new_track = addr / self.num_tracks;
 
-        let diff = addr - self.currAddr;
+        let diff = addr - self.curr_addr;
 
-        if currTrack == newTrack || diff < self.blocksPerTrack {
+        if curr_track == new_track || diff < self.blocks_per_track {
             if diff == 1 {
-                self.countSeq += 1;
+                self.count_seq += 1;
             } else {
-                self.countNseq += 1;
+                self.count_nseq += 1;
             }
-            self.utilTime += diff as f64 * self.xferTime;
+            self.util_time += diff as f64 * self.xfer_time;
         } else {
-            self.countRand += 1;
-            self.utilTime += self.seekTime as f64 + self.xferTime;
+            self.count_rand += 1;
+            self.util_time += self.seek_time as f64 + self.xfer_time;
         }
 
-        self.currAddr = addr;
+        self.curr_addr = addr;
     }
 
     fn go(&self) -> f64 {
-        return self.utilTime;
+        return self.util_time;
     }
 }
 
 struct Raid {
-    chunkSize: i32,
-    numDisks: i32,
-    raidLevel: i32,
+    chunk_size: i32,
+    num_disks: i32,
+    raid_level: i32,
     timing: bool,
     reverse: bool,
     solve: bool,
     raid5type: String,
     disks: Vec<Disk>,
-    blocksInStripe: i32,
+    blocks_in_stripe: i32,
     pdisk: i32,
-    printPhysical: bool,
+    print_physical: bool,
 }
 
 impl Raid {
     fn new(
-        chunkSize: i32,
-        numDisks: i32,
+        chunk_size: i32,
+        num_disks: i32,
         level: i32,
         timing: bool,
         reverse: bool,
@@ -157,57 +157,60 @@ impl Raid {
         raid5type: String,
     ) -> Raid {
         Raid {
-            chunkSize: chunkSize,
-            numDisks: numDisks,
-            raidLevel: level,
+            chunk_size: chunk_size,
+            num_disks: num_disks,
+            raid_level: level,
             timing: timing,
             reverse: reverse,
             solve: solve,
             raid5type: raid5type,
             disks: Vec::new(),
-            blocksInStripe: 0,
+            blocks_in_stripe: 0,
             pdisk: 0,
-            printPhysical: false,
+            print_physical: false,
         }
     }
 
     fn init(&mut self) {
-        if (self.chunkSize & BLOCKSIZE) != 0 {
+        if (self.chunk_size & BLOCKSIZE) != 0 {
             println!(
-                "chunksize ({}) must be multiple of blocksize ({}): {}",
-                self.chunkSize,
+                "chunk_size ({}) must be multiple of blocksize ({}): {}",
+                self.chunk_size,
                 BLOCKSIZE,
-                self.chunkSize % BLOCKSIZE
+                self.chunk_size % BLOCKSIZE
             );
         }
 
-        if self.raidLevel == 1 && self.numDisks & 2 != 0 {
-            println!("raid1: disks ({}) must be a multiple of two", self.numDisks);
+        if self.raid_level == 1 && self.num_disks & 2 != 0 {
+            println!(
+                "raid1: disks ({}) must be a multiple of two",
+                self.num_disks
+            );
         }
 
-        if self.raidLevel == 4 {
-            self.blocksInStripe = (self.numDisks - 1) * self.chunkSize;
-            self.pdisk = self.numDisks - 1;
+        if self.raid_level == 4 {
+            self.blocks_in_stripe = (self.num_disks - 1) * self.chunk_size;
+            self.pdisk = self.num_disks - 1;
         }
 
-        if self.raidLevel == 5 {
-            self.blocksInStripe = (self.numDisks - 1) * self.chunkSize;
+        if self.raid_level == 5 {
+            self.blocks_in_stripe = (self.num_disks - 1) * self.chunk_size;
             self.pdisk = -1;
         }
 
-        for i in 0..self.numDisks {
+        for _i in 0..self.num_disks {
             self.disks.push(Disk::new());
         }
     }
 
-    fn stats(&self, totalTime: f64) {
-        for d in 0..self.numDisks {
+    fn stats(&self, total_time: f64) {
+        for d in 0..self.num_disks {
             let s = self.disks[d as usize].stats();
-            if s.4 == totalTime {
+            if s.4 == total_time {
                 println!(
                     "disk:{}  busy: {}  I/Os: {} (sequential:{} nearly:{} random:{})",
                     d,
-                    (100.0f64 * s.4 / totalTime),
+                    (100.0f64 * s.4 / total_time),
                     s.0,
                     s.1,
                     s.2,
@@ -217,7 +220,7 @@ impl Raid {
                 println!(
                     "disk:{}  busy: {}  I/Os: {} (sequential:{} nearly:{} random:{})",
                     d,
-                    (100.0f64 * s.4 / totalTime),
+                    (100.0f64 * s.4 / total_time),
                     s.0,
                     s.1,
                     s.2,
@@ -227,7 +230,7 @@ impl Raid {
                 println!(
                     "disk:{}  busy: {}  I/Os: {} (sequential:{} nearly:{} random:{})",
                     d,
-                    (100.0f64 * s.4 / totalTime),
+                    (100.0f64 * s.4 / total_time),
                     s.0,
                     s.1,
                     s.2,
@@ -237,10 +240,10 @@ impl Raid {
         }
     }
 
-    fn enqueue(&mut self, addr: i32, size: i32, isWrite: bool) {
+    fn enqueue(&mut self, addr: i32, size: i32, is_write: bool) {
         if self.timing == false {
             if self.solve || self.reverse == false {
-                if isWrite {
+                if is_write {
                     println!("LOGICAL WRITE to  addr:{} size:{}", addr, size * BLOCKSIZE);
                 } else {
                     println!("LOGICAL READ to  addr:{} size:{}", addr, size * BLOCKSIZE);
@@ -255,23 +258,23 @@ impl Raid {
         }
 
         if self.timing == false && (self.solve || self.reverse == true) {
-            self.printPhysical = true;
+            self.print_physical = true;
         } else {
-            self.printPhysical = false;
+            self.print_physical = false;
         }
 
-        if self.raidLevel == 0 {
-            self.enqueue0(addr, size, isWrite);
-        } else if self.raidLevel == 1 {
-            self.enqueue1(addr, size, isWrite);
-        } else if self.raidLevel == 4 || self.raidLevel == 5 {
-            self.enqueue45(addr, size, isWrite);
+        if self.raid_level == 0 {
+            self.enqueue0(addr, size, is_write);
+        } else if self.raid_level == 1 {
+            self.enqueue1(addr, size, is_write);
+        } else if self.raid_level == 4 || self.raid_level == 5 {
+            self.enqueue45(addr, size, is_write);
         }
     }
 
     fn go(&self) -> f64 {
         let mut tmax = 0.0;
-        for d in 0..self.numDisks {
+        for d in 0..self.num_disks {
             let t = self.disks[d as usize].go();
             if t > tmax {
                 tmax = t;
@@ -282,20 +285,20 @@ impl Raid {
 
     // helper functions
 
-    fn doSingleRead(&mut self, disk: i32, off: i32, doNewline: bool) {
-        if self.printPhysical {
+    fn do_single_read(&mut self, disk: i32, off: i32, do_newline: bool) {
+        if self.print_physical {
             println!("  read  [disk {}, offset {}]  ", disk, off);
-            if doNewline {
+            if do_newline {
                 println!("");
             }
         }
         self.disks[disk as usize].enqueue(off);
     }
 
-    fn doSingleWrite(&mut self, disk: i32, off: i32, doNewline: bool) {
-        if self.printPhysical {
+    fn do_single_write(&mut self, disk: i32, off: i32, do_newline: bool) {
+        if self.print_physical {
             println!("  write  [disk {}, offset {}]  ", disk, off);
-            if doNewline {
+            if do_newline {
                 println!("");
             }
         }
@@ -307,25 +310,25 @@ impl Raid {
     //
 
     fn bmap0(&self, bnum: i32) -> (i32, i32) {
-        let cnum = bnum / self.chunkSize;
-        let coff = bnum % self.chunkSize;
+        let cnum = bnum / self.chunk_size;
+        let coff = bnum % self.chunk_size;
         return (
-            cnum % self.numDisks,
-            (cnum / self.numDisks) * self.chunkSize + coff,
+            cnum % self.num_disks,
+            (cnum / self.num_disks) * self.chunk_size + coff,
         );
     }
 
-    fn enqueue0(&mut self, addr: i32, size: i32, isWrite: bool) {
+    fn enqueue0(&mut self, addr: i32, size: i32, is_write: bool) {
         for b in addr..addr + size {
             let (disk, off) = self.bmap0(b);
-            if isWrite {
-                self.doSingleWrite(disk, off, true);
+            if is_write {
+                self.do_single_write(disk, off, true);
             } else {
-                self.doSingleRead(disk, off, true);
+                self.do_single_read(disk, off, true);
             }
         }
 
-        if self.timing == false && self.printPhysical {
+        if self.timing == false && self.print_physical {
             println!("");
         }
     }
@@ -335,32 +338,32 @@ impl Raid {
     //
 
     fn bmap1(&self, bnum: i32) -> (i32, i32, i32) {
-        let cnum = bnum / self.chunkSize;
-        let coff = bnum % self.chunkSize;
-        let disk = 2 * (cnum % (self.numDisks / 2));
+        let cnum = bnum / self.chunk_size;
+        let coff = bnum % self.chunk_size;
+        let disk = 2 * (cnum % (self.num_disks / 2));
         return (
             disk,
             disk + 1,
-            (cnum / (self.numDisks / 2)) * self.chunkSize + coff,
+            (cnum / (self.num_disks / 2)) * self.chunk_size + coff,
         );
     }
 
-    fn enqueue1(&mut self, addr: i32, size: i32, isWrite: bool) {
+    fn enqueue1(&mut self, addr: i32, size: i32, is_write: bool) {
         for b in addr..addr + size {
             let (disk1, disk2, off) = self.bmap1(b);
-            if isWrite {
-                self.doSingleWrite(disk1, off, false);
-                self.doSingleWrite(disk2, off, true);
+            if is_write {
+                self.do_single_write(disk1, off, false);
+                self.do_single_write(disk2, off, true);
             } else {
                 if off % 2 == 0 {
-                    self.doSingleRead(disk1, off, true);
+                    self.do_single_read(disk1, off, true);
                 } else {
-                    self.doSingleRead(disk2, off, true);
+                    self.do_single_read(disk2, off, true);
                 }
             }
         }
 
-        if self.timing == false && self.printPhysical {
+        if self.timing == false && self.print_physical {
             println!("");
         }
     }
@@ -371,15 +374,15 @@ impl Raid {
     //
 
     fn bmap4(&self, bnum: i32) -> (i32, i32) {
-        let cnum = bnum / self.chunkSize;
-        let coff = bnum % self.chunkSize;
+        let cnum = bnum / self.chunk_size;
+        let coff = bnum % self.chunk_size;
         return (
-            cnum % (self.numDisks - 1),
-            (cnum / (self.numDisks - 1)) * self.chunkSize + coff,
+            cnum % (self.num_disks - 1),
+            (cnum / (self.num_disks - 1)) * self.chunk_size + coff,
         );
     }
 
-    fn pmap4(&self, snum: i32) -> i32 {
+    fn pmap4(&self, _snum: i32) -> i32 {
         return self.pdisk;
     }
 
@@ -388,20 +391,20 @@ impl Raid {
     //
 
     fn __bmap5(&self, bnum: i32) -> (i32, i32, i32) {
-        let cnum = bnum / self.chunkSize;
-        let coff = bnum % self.chunkSize;
-        let ddsk = cnum / (self.numDisks - 1);
-        let doff = (ddsk * self.chunkSize) + coff;
-        let mut disk = cnum % (self.numDisks - 1);
-        let col = ddsk % self.numDisks;
-        let pdsk = (self.numDisks - 1) - col;
+        let cnum = bnum / self.chunk_size;
+        let coff = bnum % self.chunk_size;
+        let ddsk = cnum / (self.num_disks - 1);
+        let doff = (ddsk * self.chunk_size) + coff;
+        let mut disk = cnum % (self.num_disks - 1);
+        let col = ddsk % self.num_disks;
+        let pdsk = (self.num_disks - 1) - col;
 
         if self.raid5type == "LA" {
             if disk >= pdsk {
                 disk += 1;
             }
         } else if self.raid5type == "LS" {
-            disk = (disk - col) % (self.numDisks);
+            disk = (disk - col) % (self.num_disks);
         } else {
             println!("error: no such RAID scheme");
         }
@@ -411,12 +414,12 @@ impl Raid {
 
     //  yes this is lame (redundant call to __bmap5 is serious programmer laziness)
     fn bmap5(&self, bnum: i32) -> (i32, i32) {
-        let (disk, pdisk, off) = self.__bmap5(bnum);
+        let (disk, _pdisk, off) = self.__bmap5(bnum);
         return (disk, off);
     }
 
     fn pmap5(&self, snum: i32) -> i32 {
-        let (disk, pdisk, off) = self.__bmap5(snum * self.blocksInStripe);
+        let (_disk, _pdisk, _off) = self.__bmap5(snum * self.blocks_in_stripe);
         return self.pdisk;
     }
 
@@ -425,7 +428,7 @@ impl Raid {
     //     let numWrites = end - begin;
     //     let pdisk     = pmap(stripe);
 
-    //     if (numWrites + 1)<=(self.blocksInStripe - numWrites) {
+    //     if (numWrites + 1)<=(self.blocks_in_stripe - numWrites) {
     //         let mut offList:Vec<i32> = Vec::new();
     //         for voff in begin..end {
     //             let (disk, off) = bmap(voff);
@@ -439,8 +442,8 @@ impl Raid {
     //         }
 
     //     }else{
-    //         let stripeBegin = stripe * self.blocksInStripe;
-    //         let stripeEnd   = stripeBegin + self.blocksInStripe;
+    //         let stripeBegin = stripe * self.blocks_in_stripe;
+    //         let stripeEnd   = stripeBegin + self.blocks_in_stripe;
     //         for voff in stripeBegin..begin {
     //             let (disk, off) = bmap(voff);
     //             self.doSingleRead(disk, off, (voff == (begin - 1)) && (end == stripeEnd));
@@ -456,115 +459,115 @@ impl Raid {
 
     //     for voff in begin..end {
     //         let (disk, off) = bmap(voff);
-    //         self.doSingleWrite(disk, off,false);
+    //         self.do_single_write(disk, off,false);
     //         if !offList.contains(&off) {
     //             offList.push(off);
     //         }
     //     }
 
     //     for i in 0..offList.len() {
-    //         self.doSingleWrite(pdisk, offList[i], i == (offList.len() - 1));
+    //         self.do_single_write(pdisk, offList[i], i == (offList.len() - 1));
     //     }
     // }
 
-    fn doPartialWrite4(&mut self, stripe: i32, begin: i32, end: i32) {
-        let numWrites = end - begin;
+    fn do_partial_write4(&mut self, stripe: i32, begin: i32, end: i32) {
+        let num_writes = end - begin;
         let pdisk = self.pmap4(stripe);
 
-        if (numWrites + 1) <= (self.blocksInStripe - numWrites) {
-            let mut offList: Vec<i32> = Vec::new();
+        if (num_writes + 1) <= (self.blocks_in_stripe - num_writes) {
+            let mut off_list: Vec<i32> = Vec::new();
             for voff in begin..end {
                 let (disk, off) = self.bmap4(voff);
-                self.doSingleRead(disk, off, false);
-                if !offList.contains(&off) {
-                    offList.push(off);
+                self.do_single_read(disk, off, false);
+                if !off_list.contains(&off) {
+                    off_list.push(off);
                 }
-                for i in 0..offList.len() {
-                    self.doSingleRead(pdisk, offList[i], i == (offList.len() - 1));
+                for i in 0..off_list.len() {
+                    self.do_single_read(pdisk, off_list[i], i == (off_list.len() - 1));
                 }
             }
         } else {
-            let stripeBegin = stripe * self.blocksInStripe;
-            let stripeEnd = stripeBegin + self.blocksInStripe;
-            for voff in stripeBegin..begin {
+            let stripe_begin = stripe * self.blocks_in_stripe;
+            let stripe_end = stripe_begin + self.blocks_in_stripe;
+            for voff in stripe_begin..begin {
                 let (disk, off) = self.bmap4(voff);
-                self.doSingleRead(disk, off, (voff == (begin - 1)) && (end == stripeEnd));
+                self.do_single_read(disk, off, (voff == (begin - 1)) && (end == stripe_end));
             }
-            for voff in end..stripeEnd {
+            for voff in end..stripe_end {
                 let (disk, off) = self.bmap4(voff);
-                self.doSingleRead(disk, off, voff == (stripeEnd - 1));
+                self.do_single_read(disk, off, voff == (stripe_end - 1));
             }
         }
 
         // WRITES: same for additive or subtractive parity
-        let mut offList: Vec<i32> = Vec::new();
+        let mut off_list: Vec<i32> = Vec::new();
 
         for voff in begin..end {
             let (disk, off) = self.bmap4(voff);
-            self.doSingleWrite(disk, off, false);
-            if !offList.contains(&off) {
-                offList.push(off);
+            self.do_single_write(disk, off, false);
+            if !off_list.contains(&off) {
+                off_list.push(off);
             }
         }
 
-        for i in 0..offList.len() {
-            self.doSingleWrite(pdisk, offList[i], i == (offList.len() - 1));
+        for i in 0..off_list.len() {
+            self.do_single_write(pdisk, off_list[i], i == (off_list.len() - 1));
         }
     }
 
-    fn doPartialWrite5(&mut self, stripe: i32, begin: i32, end: i32) {
-        let numWrites = end - begin;
+    fn do_partial_write5(&mut self, stripe: i32, begin: i32, end: i32) {
+        let num_writes = end - begin;
         let pdisk = self.pmap5(stripe);
 
-        if (numWrites + 1) <= (self.blocksInStripe - numWrites) {
-            let mut offList: Vec<i32> = Vec::new();
+        if (num_writes + 1) <= (self.blocks_in_stripe - num_writes) {
+            let mut off_list: Vec<i32> = Vec::new();
             for voff in begin..end {
                 let (disk, off) = self.bmap5(voff);
-                self.doSingleRead(disk, off, false);
-                if !offList.contains(&off) {
-                    offList.push(off);
+                self.do_single_read(disk, off, false);
+                if !off_list.contains(&off) {
+                    off_list.push(off);
                 }
-                for i in 0..offList.len() {
-                    self.doSingleRead(pdisk, offList[i], i == (offList.len() - 1));
+                for i in 0..off_list.len() {
+                    self.do_single_read(pdisk, off_list[i], i == (off_list.len() - 1));
                 }
             }
         } else {
-            let stripeBegin = stripe * self.blocksInStripe;
-            let stripeEnd = stripeBegin + self.blocksInStripe;
-            for voff in stripeBegin..begin {
+            let stripe_begin = stripe * self.blocks_in_stripe;
+            let stripe_end = stripe_begin + self.blocks_in_stripe;
+            for voff in stripe_begin..begin {
                 let (disk, off) = self.bmap5(voff);
-                self.doSingleRead(disk, off, (voff == (begin - 1)) && (end == stripeEnd));
+                self.do_single_read(disk, off, (voff == (begin - 1)) && (end == stripe_end));
             }
-            for voff in end..stripeEnd {
+            for voff in end..stripe_end {
                 let (disk, off) = self.bmap5(voff);
-                self.doSingleRead(disk, off, voff == (stripeEnd - 1));
+                self.do_single_read(disk, off, voff == (stripe_end - 1));
             }
         }
 
         // WRITES: same for additive or subtractive parity
-        let mut offList: Vec<i32> = Vec::new();
+        let mut off_list: Vec<i32> = Vec::new();
 
         for voff in begin..end {
             let (disk, off) = self.bmap5(voff);
-            self.doSingleWrite(disk, off, false);
-            if !offList.contains(&off) {
-                offList.push(off);
+            self.do_single_write(disk, off, false);
+            if !off_list.contains(&off) {
+                off_list.push(off);
             }
         }
 
-        for i in 0..offList.len() {
-            self.doSingleWrite(pdisk, offList[i], i == (offList.len() - 1));
+        for i in 0..off_list.len() {
+            self.do_single_write(pdisk, off_list[i], i == (off_list.len() - 1));
         }
     }
 
     // RAID 4/5 enqueue routine
-    fn enqueue45(&mut self, addr: i32, size: i32, isWrite: bool) {
+    fn enqueue45(&mut self, addr: i32, size: i32, is_write: bool) {
         //let bmap:fn(i32) -> (i32,i32);
         //let pmap:fn(i32)->i32;
-        //if self.raidLevel == 4 {
+        //if self.raid_level == 4 {
         //bmap = bmap4;                                                                     //?????????? function pointer
         //pmap = pmap4;
-        //}else if self.raidLevel == 5 {
+        //}else if self.raid_level == 5 {
         //bmap = bmap5;
         //pmap = pmap5;
         //}
@@ -575,18 +578,18 @@ impl Raid {
         //         //self.doSingleRead(disk, off,false);
         //     }
         // }else {
-        //     let initStripe     = (addr)            / self.blocksInStripe;
-        //     let finalStripe    = (addr + size - 1) / self.blocksInStripe;
+        //     let initStripe     = (addr)            / self.blocks_in_stripe;
+        //     let finalStripe    = (addr + size - 1) / self.blocks_in_stripe;
 
         //     let mut left  = size;
         //     let mut begin = addr;
         //     let mut end;
 
         //     for stripe in initStripe..finalStripe {
-        //         let endOfStripe = (stripe * self.blocksInStripe) + self.blocksInStripe;
+        //         let endOfStripe = (stripe * self.blocks_in_stripe) + self.blocks_in_stripe;
 
-        //         if left >= self.blocksInStripe {
-        //             end = begin + self.blocksInStripe;
+        //         if left >= self.blocks_in_stripe {
+        //             end = begin + self.blocks_in_stripe;
         //         } else {
         //             end = begin + left;
         //         }
@@ -602,67 +605,67 @@ impl Raid {
         //     }
         // }
 
-        if self.raidLevel == 4 {
-            if isWrite == false {
+        if self.raid_level == 4 {
+            if is_write == false {
                 for b in addr..addr + size {
                     let (disk, off) = self.bmap4(b);
-                    self.doSingleRead(disk, off, false);
+                    self.do_single_read(disk, off, false);
                 }
             } else {
-                let initStripe = (addr) / self.blocksInStripe;
-                let finalStripe = (addr + size - 1) / self.blocksInStripe;
+                let init_stripe = (addr) / self.blocks_in_stripe;
+                let final_stripe = (addr + size - 1) / self.blocks_in_stripe;
 
                 let mut left = size;
                 let mut begin = addr;
                 let mut end;
 
-                for stripe in initStripe..finalStripe {
-                    let endOfStripe = (stripe * self.blocksInStripe) + self.blocksInStripe;
+                for stripe in init_stripe..final_stripe {
+                    let end_of_stripe = (stripe * self.blocks_in_stripe) + self.blocks_in_stripe;
 
-                    if left >= self.blocksInStripe {
-                        end = begin + self.blocksInStripe;
+                    if left >= self.blocks_in_stripe {
+                        end = begin + self.blocks_in_stripe;
                     } else {
                         end = begin + left;
                     }
 
-                    if end >= endOfStripe {
-                        end = endOfStripe
+                    if end >= end_of_stripe {
+                        end = end_of_stripe
                     }
 
-                    self.doPartialWrite4(stripe, begin, end);
+                    self.do_partial_write4(stripe, begin, end);
 
                     left -= end - begin;
                     begin = end;
                 }
             }
-        } else if self.raidLevel == 5 {
-            if isWrite == false {
+        } else if self.raid_level == 5 {
+            if is_write == false {
                 for b in addr..addr + size {
                     let (disk, off) = self.bmap5(b);
-                    self.doSingleRead(disk, off, false);
+                    self.do_single_read(disk, off, false);
                 }
             } else {
-                let initStripe = (addr) / self.blocksInStripe;
-                let finalStripe = (addr + size - 1) / self.blocksInStripe;
+                let init_stripe = (addr) / self.blocks_in_stripe;
+                let final_stripe = (addr + size - 1) / self.blocks_in_stripe;
 
                 let mut left = size;
                 let mut begin = addr;
                 let mut end;
 
-                for stripe in initStripe..finalStripe {
-                    let endOfStripe = (stripe * self.blocksInStripe) + self.blocksInStripe;
+                for stripe in init_stripe..final_stripe {
+                    let end_of_stripe = (stripe * self.blocks_in_stripe) + self.blocks_in_stripe;
 
-                    if left >= self.blocksInStripe {
-                        end = begin + self.blocksInStripe;
+                    if left >= self.blocks_in_stripe {
+                        end = begin + self.blocks_in_stripe;
                     } else {
                         end = begin + left;
                     }
 
-                    if end >= endOfStripe {
-                        end = endOfStripe
+                    if end >= end_of_stripe {
+                        end = end_of_stripe
                     }
 
-                    self.doPartialWrite5(stripe, begin, end);
+                    self.do_partial_write5(stripe, begin, end);
 
                     left -= end - begin;
                     begin = end;
@@ -670,7 +673,7 @@ impl Raid {
             }
         }
 
-        if self.timing == false && self.printPhysical {
+        if self.timing == false && self.print_physical {
             println!("");
         }
     }
@@ -678,12 +681,12 @@ impl Raid {
 
 struct RaidOption {
     seed: u64,
-    numDisks: i32,
-    chunkSize: String,
-    numRequests: i32,
+    num_disks: i32,
+    chunk_size: String,
+    num_requests: i32,
     size: String,
     workload: String,
-    writeFrac: i32,
+    write_frac: i32,
     range: i32,
     level: i32,
     raid5type: String,
@@ -696,12 +699,12 @@ impl RaidOption {
     fn new() -> RaidOption {
         RaidOption {
             seed: 0,
-            numDisks: 4,
-            chunkSize: String::from("4k"),
-            numRequests: 10,
+            num_disks: 4,
+            chunk_size: String::from("4k"),
+            num_requests: 10,
             size: String::from("4k"),
             workload: String::from("rand"),
-            writeFrac: 0,
+            write_frac: 0,
             range: 10000,
             level: 0,
             raid5type: String::from("LS"),
@@ -726,15 +729,15 @@ pub fn parse_op(op_vec: Vec<&str>) {
                 i = i + 2;
             }
             "-D" => {
-                raid_op.numDisks = op_vec[i + 1].parse().unwrap();
+                raid_op.num_disks = op_vec[i + 1].parse().unwrap();
                 i = i + 2;
             }
             "-C" => {
-                raid_op.chunkSize = op_vec[i + 1].to_string();
+                raid_op.chunk_size = op_vec[i + 1].to_string();
                 i = i + 2;
             }
             "-n" => {
-                raid_op.numRequests = op_vec[i + 1].parse().unwrap();
+                raid_op.num_requests = op_vec[i + 1].parse().unwrap();
                 i = i + 2;
             }
             "-S" => {
@@ -746,7 +749,7 @@ pub fn parse_op(op_vec: Vec<&str>) {
                 i = i + 2;
             }
             "-w" => {
-                raid_op.writeFrac = op_vec[i + 1].parse().unwrap();
+                raid_op.write_frac = op_vec[i + 1].parse().unwrap();
                 i = i + 2;
             }
             "-R" => {
@@ -787,12 +790,12 @@ fn execute_raid_op(options: RaidOption) {
 
     println!("ARG blockSize {}", BLOCKSIZE);
     println!("ARG seed {}", options.seed);
-    println!("ARG numDisks {}", options.numDisks);
-    println!("ARG chunkSize {}", options.chunkSize);
-    println!("ARG numRequests {}", options.numRequests);
+    println!("ARG num_disks {}", options.num_disks);
+    println!("ARG chunk_size {}", options.chunk_size);
+    println!("ARG numRequests {}", options.num_requests);
     println!("ARG reqSize {}", options.size);
     println!("ARG workload {}", options.workload);
-    println!("ARG writeFrac {}", options.writeFrac);
+    println!("ARG writeFrac {}", options.write_frac);
     println!("ARG randRange {}", options.range);
     println!("ARG level {}", options.level);
     println!("ARG raid5 {}", options.raid5type);
@@ -800,9 +803,9 @@ fn execute_raid_op(options: RaidOption) {
     println!("ARG timing {}", options.timing);
     println!("");
 
-    let writeFrac = options.writeFrac as f64 / 100.0f64;
+    let write_frac = options.write_frac as f64 / 100.0f64;
 
-    assert!(writeFrac >= 0.0f64 && writeFrac <= 1.0f64);
+    assert!(write_frac >= 0.0f64 && write_frac <= 1.0f64);
 
     let mut size = convert(options.size);
 
@@ -814,18 +817,18 @@ fn execute_raid_op(options: RaidOption) {
     }
 
     size = size / BLOCKSIZE;
-    let mut workloadIsSequential = false;
+    let mut workload_is_sequential = false;
     if options.workload == "seq" || options.workload == "s" || options.workload == "sequential" {
-        workloadIsSequential = true
+        workload_is_sequential = true
     } else if options.workload == "rand" || options.workload == "r" || options.workload == "random"
     {
-        workloadIsSequential = false;
+        workload_is_sequential = false;
     } else {
         println!("error: workload must be either r/rand/random or s/seq/sequential");
     }
 
     assert!(options.level == 0 || options.level == 1 || options.level == 4 || options.level == 5);
-    if options.level != 0 && options.numDisks < 2 {
+    if options.level != 0 && options.num_disks < 2 {
         println!("RAID-4 and RAID-5 need more than 1 disk");
     }
 
@@ -834,8 +837,8 @@ fn execute_raid_op(options: RaidOption) {
     }
 
     let mut r = Raid::new(
-        convert(options.chunkSize),
-        options.numDisks,
+        convert(options.chunk_size),
+        options.num_disks,
         options.level,
         options.timing,
         options.reverse,
@@ -846,9 +849,9 @@ fn execute_raid_op(options: RaidOption) {
 
     let mut off = 0;
 
-    for i in 0..options.numRequests {
-        let mut blk;
-        if workloadIsSequential == true {
+    for _i in 0..options.num_requests {
+        let blk;
+        if workload_is_sequential == true {
             blk = off;
             off += size;
         } else {
@@ -856,7 +859,7 @@ fn execute_raid_op(options: RaidOption) {
             blk = (rand_x * options.range as f64) as i32;
         }
         let rand_y: f64 = rng.gen();
-        if rand_y < writeFrac {
+        if rand_y < write_frac {
             r.enqueue(blk, size, true);
         } else {
             r.enqueue(blk, size, false);

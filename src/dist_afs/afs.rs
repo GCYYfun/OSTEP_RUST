@@ -10,14 +10,14 @@ const HELP: &str = include_str!("help.txt");
 //     return p;
 // }
 
-fn pickrandS(tlist: Vec<String>) -> String {
+fn pickrand_s(tlist: Vec<String>) -> String {
     let rand_x: f64 = rand::thread_rng().gen();
     let n = (rand_x * tlist.len() as f64) as usize;
     let p = tlist[n].clone();
     return p;
 }
 
-fn pickrandC(tlist: &mut Vec<Client>) -> &mut Client {
+fn pickrand_c(tlist: &mut Vec<Client>) -> &mut Client {
     let rand_x: f64 = rand::thread_rng().gen();
     let n = (rand_x * tlist.len() as f64) as usize;
     let p = &mut tlist[n];
@@ -273,7 +273,7 @@ impl FileDesc {
         return self.fd[&sfd].clone();
     }
 
-    fn free(&self, i: i32) {
+    fn free(&self, _i: i32) {
         // assert!(i >= 0 && i < self.max, "filedesc:free() -- file descriptor out of valid range (%d not between 0 and %d)" ,sfd, self.max);
         // assert!(self.fd[&sfd] != "",    "filedesc:free() -- fd:{} not in use, cannot free" , sfd);
         // self.fd.insert(i,"");
@@ -393,17 +393,17 @@ impl Cache {
             let dirty = self.cache[&fname].dirty;
             let refcnt = self.cache[&fname].refcnt;
             let valid = self.cache[&fname].valid;
-            let mut validPrint: i32;
-            let mut dirtyPrint: i32;
+            let valid_print: i32;
+            let dirty_print: i32;
             if valid == true {
-                validPrint = 1;
+                valid_print = 1;
             } else {
-                validPrint = 0;
+                valid_print = 0;
             }
             if dirty == true {
-                dirtyPrint = 1;
+                dirty_print = 1;
             } else {
-                dirtyPrint = 0;
+                dirty_print = 0;
             }
 
             if self.solve && isset(self.detail, 2) {
@@ -411,12 +411,12 @@ impl Cache {
                 if isset(self.detail, 3) {
                     println!(
                         "{} [{}:{} (v={},d={},r={})]",
-                        self.name, fname, data, validPrint, dirtyPrint, refcnt
+                        self.name, fname, data, valid_print, dirty_print, refcnt
                     );
                 } else {
                     println!(
                         "[{}:{} (v={},d={},r={})]",
-                        fname, data, validPrint, dirtyPrint, refcnt
+                        fname, data, valid_print, dirty_print, refcnt
                     );
                 }
             }
@@ -561,8 +561,8 @@ impl Client {
         let mut ai2 = 0;
         self.fd.init();
         if self.actions == "" {
-            for i in 0..numsteps {
-                let fname = pickrandS(self.files.getfiles());
+            for _i in 0..numsteps {
+                let fname = pickrand_s(self.files.getfiles());
                 let r: f64 = rand::thread_rng().gen();
                 let fd = self.fd.alloc(fname.clone(), -1);
                 assert!(
@@ -634,7 +634,7 @@ impl Client {
         }
     }
 
-    fn setServer(&mut self, server: Server) {
+    fn set_server(&mut self, server: Server) {
         self.server = server;
     }
 
@@ -671,7 +671,7 @@ impl Client {
         self.cache.invalidate(fname);
     }
 
-    fn step(&mut self, space: i32) -> i32 {
+    fn step(&mut self, _space: i32) -> i32 {
         if self.done == true {
             return -1;
         }
@@ -697,9 +697,9 @@ impl Client {
             println!("open:{} [fd:{}]", fname, fd);
             self.getfile(fname.to_string(), false);
         } else {
-            let actionsType = self.acts2[locate].0;
+            let actions_type = self.acts2[locate].0;
 
-            if actionsType == MICRO_READ {
+            if actions_type == MICRO_READ {
                 let fd = &self.acts2[locate].1;
                 let fname = self.fd.lookup(*fd);
                 self.readcnt += 1;
@@ -710,7 +710,7 @@ impl Client {
                 } else {
                     println!("read:{} -> value?", fd);
                 }
-            } else if actionsType == MICRO_WRITE {
+            } else if actions_type == MICRO_WRITE {
                 let fd = &self.acts2[locate].1;
                 let fname = self.fd.lookup(*fd);
                 self.writecnt += 1;
@@ -723,7 +723,7 @@ impl Client {
                 } else {
                     println!("write:{} value? -> {}", fd, v);
                 }
-            } else if actionsType == MICRO_CLOSE {
+            } else if actions_type == MICRO_CLOSE {
                 let fd = &self.acts2[locate].1;
                 let fname = self.fd.lookup(*fd);
                 let (incache, contents) = self.cache.get(fname.clone());
@@ -848,7 +848,7 @@ fn execute_afs_op(options: AfsOption) {
     println!("");
 
     let seed = options.seed;
-    let mut numclients = options.numclients;
+    let mut _numclients = options.numclients;
     let numsteps = options.numsteps;
     let numfiles = options.numfiles;
     let readratio = options.readratio;
@@ -879,8 +879,8 @@ fn execute_afs_op(options: AfsOption) {
 
     if actions != "" {
         let cactions: Vec<&str> = actions.split(',').collect();
-        if numclients != cactions.len() as i32 {
-            numclients = cactions.len() as i32;
+        if _numclients != cactions.len() as i32 {
+            _numclients = cactions.len() as i32;
         }
         let mut i = 0;
 
@@ -900,7 +900,7 @@ fn execute_afs_op(options: AfsOption) {
             i += 1;
         }
     } else {
-        for i in 0..numclients {
+        for i in 0.._numclients {
             let mut c = Client::new(
                 format!("c{}", i),
                 i,
@@ -927,7 +927,7 @@ fn execute_afs_op(options: AfsOption) {
     s.filestats(true);
 
     for c in &mut clients {
-        c.setServer(s.clone());
+        c.set_server(s.clone());
     }
 
     let mut schedcurr = 0;
@@ -964,9 +964,9 @@ fn execute_afs_op(options: AfsOption) {
         //         schedcurr = 0;
         //     }
         // }
-        let mut c;
+        let c;
         if schedule == "" {
-            c = pickrandC(&mut clients);
+            c = pickrand_c(&mut clients);
         } else {
             let idx = &schedule[schedcurr..schedcurr + 1].parse::<usize>().unwrap();
             c = &mut clients[*idx];

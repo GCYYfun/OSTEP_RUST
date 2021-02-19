@@ -75,30 +75,8 @@ pub fn parse_op(op_vec: Vec<&str>) {
     execute_scheduler_op(sche_op);
 }
 
-fn execute_scheduler_op(options: SchedulerOption) {
-    // let seed_u8 = options.seed as u8;
-    // let seed = [
-    //     seed_u8 + 1,
-    //     seed_u8 + 2,
-    //     seed_u8 + 3,
-    //     seed_u8 + 4,
-    //     seed_u8 + 5,
-    //     seed_u8 + 6,
-    //     seed_u8 + 7,
-    //     seed_u8 + 8,
-    //     seed_u8 + 9,
-    //     seed_u8 + 10,
-    //     seed_u8 + 11,
-    //     seed_u8 + 12,
-    //     seed_u8 + 13,
-    //     seed_u8 + 14,
-    //     seed_u8 + 15,
-    //     seed_u8 + 16,
-    // ];
-
+fn execute_scheduler_op(mut options: SchedulerOption) {
     let mut rng = rand_chacha::ChaCha8Rng::seed_from_u64(options.seed);
-
-    // let mut rng = SmallRng::from_seed(seed);
 
     println!("ARG policy : {}", options.policy);
     if options.jlist == "" {
@@ -142,8 +120,10 @@ fn execute_scheduler_op(options: SchedulerOption) {
 
     if options.solve == true {
         println!("** Solutions **");
-        if options.policy == "SJF" { // not impl SJF
-             //joblist.sort_by(|a,b| a[1]<(b[1]));
+        if options.policy == "SJF" {
+            // not impl SJF
+            joblist.sort_by(|a, b| a.partial_cmp(b).unwrap());
+            options.policy = "FIFO".to_string();
         }
 
         if options.policy == "FIFO" {

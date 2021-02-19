@@ -63,7 +63,7 @@ is a simple run that just has one program being run, and that program only
 uses the CPU (it does no IO).
 
 ```sh
-prompt> cargo run process-run -l 5:100 
+prompt> cargo run process_run -l 5:100 
 Produce a trace of what would happen when you run these processes:
 Process 0
   cpu
@@ -87,7 +87,7 @@ You can see what happens to the process by using the -c flag, which computes the
 answers for you:
 
 ```sh
-prompt> cargo run process-run -l 5:100 -c
+prompt> cargo run process_run -l 5:100 -c
 Time     PID: 0        CPU        IOs
   1     RUN:cpu          1
   2     RUN:cpu          1
@@ -103,7 +103,7 @@ entire run, and not doing any I/Os.
 Let's make it slightly more complex by running two processes:
 
 ```sh
-prompt> cargo run process-run -l 5:100,5:100
+prompt> cargo run process_run -l 5:100,5:100
 Produce a trace of what would happen when you run these processes:
 Process 0
   cpu
@@ -128,7 +128,7 @@ In this case, two different processes run, each again just using the CPU. What
 happens when the operating system runs them? Let's find out:
 
 ```sh
-prompt> cargo run process-run -l 5:100,5:100 -c
+prompt> cargo run process_run -l 5:100,5:100 -c
 Time     PID: 0     PID: 1        CPU        IOs
   1     RUN:cpu      READY          1
   2     RUN:cpu      READY          1
@@ -152,7 +152,7 @@ example, the process just issues I/O requests. We specify here that I/Os take 5
 time units to complete with the flag -L.
 
 ```sh
-prompt> cargo run process-run -l 3:0 -L 5
+prompt> cargo run process_run -l 3:0 -L 5
 Produce a trace of what would happen when you run these processes:
 Process 0
   io
@@ -170,7 +170,7 @@ Important behaviors:
 What do you think the execution trace will look like? Let's find out:
 
 ```sh
-prompt> ./process-run.py -l 3:0 -L 5 -c
+prompt> cargo run process_run -l 3:0 -L 5 -c
 Time    PID: 0       CPU       IOs
   1         RUN:io             1
   2        WAITING                           1
