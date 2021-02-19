@@ -3,8 +3,8 @@
 use std::env;
 
 // CPU
-mod cpu_intro; // not done
-mod cpu_sched; // not done
+mod cpu_intro; // done
+mod cpu_sched; // done
 mod cpu_sched_lottery; // done
 mod cpu_sched_mlfq; // not done
 

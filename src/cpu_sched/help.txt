@@ -1,6 +1,5 @@
-Usage: process-run [options]
 
-Usage: scheduler [options]
+Usage: cargo run scheduler [options]
 
 Options:
   -h, --help            show this help message and exit

@@ -1,6 +1,7 @@
-// almost done except RR SJF
+// done
 
 use rand::{Rng, SeedableRng};
+use std::collections::HashMap;
 
 const HELP: &str = include_str!("help.txt");
 
@@ -75,6 +76,21 @@ pub fn parse_op(op_vec: Vec<&str>) {
     execute_scheduler_op(sche_op);
 }
 
+#[derive(Debug, PartialEq, PartialOrd,Clone)]
+struct Job {
+    jobnum:u32,
+    runtime:f32,
+}
+
+impl Job {
+    fn new(jobnum:u32,runtime:f32) -> Self {
+        Job {
+            jobnum,
+            runtime
+        }
+    }
+}
+
 fn execute_scheduler_op(mut options: SchedulerOption) {
     let mut rng = rand_chacha::ChaCha8Rng::seed_from_u64(options.seed);
 
@@ -91,28 +107,29 @@ fn execute_scheduler_op(mut options: SchedulerOption) {
 
     println!("Here is the job list, with the run time of each job: ");
 
-    let mut joblist: Vec<Vec<f32>> = Vec::new();
+    let mut joblist: Vec<Job> = Vec::new();
     if options.jlist == "" {
         for jobnum in 0..options.jobs {
             let rand_x: f64 = rng.gen();
             let runtime = (options.maxlen as f64 * rand_x) as u32 + 1;
-            let mut v: Vec<f32> = Vec::new();
-            v.push(jobnum as f32);
-            v.push(runtime as f32);
+            let v = Job::new(jobnum,runtime as f32);
+            // v.push(jobnum as f32);
+            // v.push(runtime as f32);
             joblist.push(v);
             println!("  Job : {}  ( length = {} )", jobnum, runtime);
         }
     } else {
         let mut jobnum = 0;
         for runtime in options.jlist.split(",") {
-            let mut v: Vec<f32> = Vec::new();
-            v.push(jobnum as f32);
-            v.push(runtime.to_string().parse::<f32>().unwrap());
+            // let mut v: Vec<f32> = Vec::new();
+            let v = Job::new(jobnum,runtime.to_string().parse::<f32>().unwrap());
+            // v.push(jobnum as f32);
+            // v.push(runtime.to_string().parse::<f32>().unwrap());
             joblist.push(v);
             jobnum += 1;
         }
         for job in &joblist {
-            println!("Job : {}  (length = {} )", job[0], job[1].to_string());
+            println!("Job : {}  (length = {} )", job.jobnum, job.runtime.to_string());
         }
     }
 
@@ -122,7 +139,7 @@ fn execute_scheduler_op(mut options: SchedulerOption) {
         println!("** Solutions **");
         if options.policy == "SJF" {
             // not impl SJF
-            joblist.sort_by(|a, b| a.partial_cmp(b).unwrap());
+            joblist.sort_by(|a, b| a.runtime.partial_cmp(&b.runtime).unwrap());
             options.policy = "FIFO".to_string();
         }
 
@@ -130,8 +147,8 @@ fn execute_scheduler_op(mut options: SchedulerOption) {
             let mut thetime: f32 = 0.0;
             println!("Execution trace:");
             for job in &joblist {
-                println!("  [ time {time:>width$} ] Run job {job0} for {job1} secs ( DONE at {donetime} )" ,time = thetime,width = 3, job0 = job[0], job1= format!("{:.*}",2,job[1]),donetime = format!("{:.*}",2,(thetime + job[1])));
-                thetime += job[1];
+                println!("  [ time {time:>width$} ] Run job {job0} for {job1} secs ( DONE at {donetime} )" ,time = thetime,width = 3, job0 = job.jobnum, job1= format!("{:.*}",2,job.runtime),donetime = format!("{:.*}",2,(thetime + job.runtime)));
+                thetime += job.runtime;
             }
 
             println!("Final statistics :");
@@ -141,8 +158,8 @@ fn execute_scheduler_op(mut options: SchedulerOption) {
             let mut wait_sum = 0.0;
             let mut response_sum = 0.0;
             for tmp in &joblist {
-                let jobnum = tmp[0];
-                let runtime = tmp[1];
+                let jobnum = tmp.jobnum;
+                let runtime = tmp.runtime;
 
                 let response = t;
                 let turnaround = t + runtime;
@@ -168,6 +185,84 @@ fn execute_scheduler_op(mut options: SchedulerOption) {
         if options.policy == "RR" {
             // not impl RR
             println!("Execution trace:");
+
+            let mut turnaround:HashMap<usize,f32> = HashMap::new();
+            let mut response:HashMap<usize,f32> = HashMap::new();
+            let mut lastran:HashMap<usize,f32> = HashMap::new();
+            let mut wait:HashMap<usize,f32> = HashMap::new();
+
+            
+
+            let mut jobcount = joblist.len();
+            for _i in 0..jobcount {
+                lastran.entry(_i).or_insert(0.0f32);
+                wait.entry(_i).or_insert(0.0f32);
+                turnaround.entry(_i).or_insert(0.0f32);
+                response.entry(_i).or_insert(-1f32);
+            }
+
+            let mut runlist : Vec<Job> = Vec::new();
+
+            for e in &joblist {
+                runlist.push(e.clone());
+            }
+
+            let mut thetime  = 0.0f32;
+
+            while jobcount > 0 {
+                let job = runlist.remove(0);
+                let jobnum = job.jobnum;
+                let mut runtime = job.runtime;
+                let quantum = options.quantum;
+                let mut _ranfor:f32;
+
+                if response[&(jobnum as usize)] == -1f32 {
+                    if let Some(x) = response.get_mut(&(jobnum as usize)) {
+                        *x = thetime;
+                    }
+                }
+                let currwait = thetime - lastran[&(jobnum as usize)];
+                if let Some(x) = wait.get_mut(&(jobnum as usize)) {
+                    *x += currwait;
+                }
+
+                if runtime > quantum as f32{
+                    runtime -= quantum as f32;
+                    _ranfor = quantum as f32;
+                    println!("  [ time {:3} ] Run job {:3} for {:.2} secs",thetime, jobnum, _ranfor);
+                    runlist.push(Job::new(jobnum, runtime));
+                }else {
+                    _ranfor = runtime;
+                    println!("  [ time {:3} ] Run job {:3} for {:.2} secs ( DONE at {:.2} )",thetime, jobnum, _ranfor, format!("{:.*}",2,(thetime + job.runtime)));
+                    if let Some(x) = turnaround.get_mut(&(jobnum as usize)) {
+                        *x = thetime + _ranfor;
+                    }
+                    jobcount -= 1;
+                }
+                thetime += _ranfor;
+                if let Some(x) = lastran.get_mut(&(jobnum as usize)) {
+                    *x = thetime;
+                }
+            }
+
+            println!("Final statistics :");
+            let mut turnaround_sum = 0.0;
+            let mut wait_sum = 0.0;
+            let mut response_sum = 0.0;
+
+            for i in 0..joblist.len() {
+                turnaround_sum +=  turnaround[&i];
+                response_sum += response[&i];
+                wait_sum += wait[&i];
+                println!("  Job {:3} -- Response: {:3.2}  Turnaround {:3.2}  Wait {:3.2}",i, response[&i], turnaround[&i], wait[&i]);
+            }
+            let count = joblist.len();
+            println!(
+                "  Average -- Response: {}  Turnaround : {}  Wait : {}",
+                response_sum / count as f32,
+                turnaround_sum / count as f32,
+                wait_sum / count as f32
+            );
         }
 
         if options.policy != "FIFO" && options.policy != "SJF" && options.policy != "RR" {
