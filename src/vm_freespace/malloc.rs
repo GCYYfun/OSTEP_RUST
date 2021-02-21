@@ -41,7 +41,8 @@ impl Malloc {
     }
 
     fn add_to_map(&mut self, addr: i32, size: i32) {
-        self.sizemap.entry(addr).or_insert(size);
+        assert!(!self.sizemap.contains_key(&addr));
+        self.sizemap.insert(addr,size);
     }
 
     fn malloc(&mut self, mut size: i32) -> (i32, i32) {
@@ -95,7 +96,7 @@ impl Malloc {
                 self.freelist.remove(best_idx);
                 self.add_to_map(best_addr, size);
             } else {
-                // ???   abort??
+                panic!("should never get here");
             }
             return (best_addr, count);
         }
@@ -104,7 +105,7 @@ impl Malloc {
     }
 
     fn free(&mut self, addr: i32) -> i32 {
-        if self.sizemap.contains_key(&addr) {
+        if !self.sizemap.contains_key(&addr) {
             return -1;
         }
 
@@ -116,13 +117,13 @@ impl Malloc {
             self.freelist.insert(0, (addr, size));
         } else if self.return_policy == "ADDRSORT" {
             self.freelist.push((addr, size));
-        // sort
+            self.freelist.sort_by(|a,b| a.0.cmp(&b.0));
         } else if self.return_policy == "SIZESORT+" {
             self.freelist.push((addr, size));
-        // sort
+            self.freelist.sort_by(|a,b| a.1.cmp(&b.1));
         } else if self.return_policy == "SIZESORT-" {
             self.freelist.push((addr, size));
-            // sort
+            self.freelist.sort_by(|a,b| b.1.cmp(&a.1));
         }
 
         if self.coalesce == true {
@@ -139,19 +140,20 @@ impl Malloc {
                 }
             }
             self.newlist.push(self.curr);
-            self.freelist.clear();
-            for t in &self.newlist {
-                self.freelist.push(*t);
-            }
-            //self.freelist = self.newlist;
+            // self.freelist.clear();
+            // for t in &self.newlist {
+            //     self.freelist.push(*t);
+            // }
+            self.freelist = self.newlist.clone();
         }
+        self.sizemap.remove(&addr);
         return 0;
     }
 
     fn dump(&self) {
-        println!("Free List [ Size {} ] : ", self.freelist.len());
+        print!("Free List [ Size {} ] : ", self.freelist.len());
         for e in &self.freelist {
-            println!("[ addr:{} sz:{} ]", (*e).0, (*e).1);
+            print!("[ addr:{} sz:{} ]", (*e).0, (*e).1);
         }
         println!("");
     }
@@ -176,7 +178,7 @@ struct MallocOption {
 impl MallocOption {
     fn new() -> MallocOption {
         MallocOption {
-            seed: 0,
+            seed: 1,
             heap_size: 100,
             base_addr: 1000,
             header_size: 0,
@@ -299,7 +301,7 @@ fn execute_malloc_op(options: MallocOption) {
                     p.insert(c, ptr);
                     l.push(c);
                 }
-                println!("ptr[{}] = Alloc({})", c, size);
+                print!("ptr[{}] = Alloc({})", c, size);
 
                 if options.solve == true {
                     println!(
@@ -341,47 +343,49 @@ fn execute_malloc_op(options: MallocOption) {
                     println!("List ?");
                 }
             }
+            println!("")
         }
     } else {
-        // let mut c = 0;
-        // for op in options.ops_list.split(",").collect() {
-        //     if op[0] == "+" {
-        //         let mut size = op.split("-").collect()[1];
-        //         let (ptr, cnt) = m.malloc(size);
-        //         if ptr != -1 {
-        //             P.insert(c,ptr);
-        //         }
-        //         println!("ptr[{}] = Alloc({})" ,c, size);
+        let mut c = 0;
+        for op in options.ops_list.split(",").collect::<Vec<&str>>() {
+            if op.starts_with("+") {
+                let size = op.split("+").collect::<Vec<&str>>()[1].parse().unwrap();
+                let (ptr, cnt) = m.malloc(size);
+                if ptr != -1 {
+                    p.insert(c,ptr);
+                }
+                println!("ptr[{}] = Alloc({})" ,c, size);
 
-        //         if options.solve == true {
-        //             println!(" returned {} (searched {} elements) ",ptr,cnt);
-        //         }else {
-        //             println!("returned ?");
-        //         }
+                if options.solve == true {
+                    println!(" returned {} (searched {} elements) ",ptr,cnt);
+                }else {
+                    println!("returned ?");
+                }
 
-        //         c+=1;
-        //     }else if op[0] == "-" {
-        //         let mut index = op.split("-").collect()[1];
-        //         if index>= P.len() {
-        //             println!("Invalid Free: Skipping");
-        //             continue;
-        //         }
-        //         print!("Free(ptr[{}])",index);
-        //         let rc = m.free(p[index]);
-        //         if options.solve == true {
-        //                 println!("returned {}" ,rc);
-        //             }else {
-        //                 println!("returned ?");
-        //             }
-        //     }else {
-        //         println!("badly specified operand: must be +Size or -Index");
-        //     }
+                c+=1;
+            }else if op.starts_with("-") {
+                let index = op.split("-").collect::<Vec<&str>>()[1].parse::<usize>().unwrap();
+                if index>= p.len() {
+                    println!("Invalid Free: Skipping");
+                    continue;
+                }
+                print!("Free(ptr[{}])",index);
+                let rc = m.free(p[&(index as i32)]);
+                if options.solve == true {
+                        println!("returned {}" ,rc);
+                    }else {
+                        println!("returned ?");
+                    }
+            }else {
+                panic!("badly specified operand: must be +Size or -Index");
+            }
 
-        //     if options.solve == true {
-        //         m.dump();
-        //     }else {
-        //         println!("List ?")
-        //     }
-        // }
+            if options.solve == true {
+                m.dump();
+            }else {
+                println!("List ?")
+            }
+            println!("");
+        }
     }
 }

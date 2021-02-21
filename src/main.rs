@@ -7,18 +7,18 @@ use std::env;
 */
 // CPU
 // mod cpu_api;
-mod cpu_intro; // 完全可用 测试完毕
-mod cpu_sched; // 应该可用 测试完毕
-mod cpu_sched_lottery; // done
+mod cpu_intro;
+mod cpu_sched;
+mod cpu_sched_lottery;
 mod cpu_sched_mlfq; // not done
 
 // VM
-mod vm_beyondphys_policy; // done
-mod vm_freespace; // not done
-mod vm_mechanism; // done
-mod vm_paging; // done
-mod vm_segmentation; // done
-mod vm_smalltables; // done
+mod vm_beyondphys_policy;
+mod vm_freespace;
+mod vm_mechanism;
+mod vm_paging;
+mod vm_segmentation;
+mod vm_smalltables;
 
 /*
     Concurrency

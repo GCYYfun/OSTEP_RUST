@@ -56,7 +56,7 @@ Simulation vm_segmentation 段模式模拟 (只有x86有段模式)
 
 
 
-Simulation vm_freespace 堆内存分配器模拟 (尚未提供)
+Simulation vm_freespace 堆内存分配器模拟
 
     cargo run vm_freespace
     运行 查看 堆内存分配器的运行

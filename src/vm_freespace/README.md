@@ -40,20 +40,21 @@ Here is a simple example:
 ```sh
 prompt> cargo run malloc -S 100 -b 1000 -H 4 -a 4 -l ADDRSORT -p BEST -n 5 
 
-ptr[0] = Alloc(3)  returned ?
-List?
+ptr[0] = Alloc(10)returned ?
+List ?
 
-Free(ptr[0]) returned ?
-List?
+ptr[1] = Alloc(3)returned ?
+List ?
 
-ptr[1] = Alloc(5)  returned ?
-List?
+Free(ptr[0])
+returned ?
+List ?
 
-Free(ptr[1]) returned ?
-List?
+ptr[2] = Alloc(9)returned ?
+List ?
 
-ptr[2] = Alloc(8)  returned ?
-List?
+ptr[3] = Alloc(10)returned ?
+List ?
 ```
 
 In this example, we specify a heap of size 100 bytes (-S 100), starting at
@@ -71,66 +72,70 @@ Here we look at the results by using the -c option.
 ```sh
 prompt> cargo run malloc -S 100 -b 1000 -H 4 -a 4 -l ADDRSORT -p BEST -n 5 -c
 
-ptr[0] = Alloc(3)  returned 1004 (searched 1 elements)
-Free List [ Size 1 ]:  [ addr:1008 sz:92 ]
+ptr[0] = Alloc(10) returned 1004 (searched 1 elements) 
+Free List [ Size 1 ] : [ addr:1016 sz:84 ]
 
-Free(ptr[0]) returned 0
-Free List [ Size 2 ]:  [ addr:1000 sz:8 ] [ addr:1008 sz:92 ]
+ptr[1] = Alloc(3) returned 1020 (searched 1 elements) 
+Free List [ Size 1 ] : [ addr:1024 sz:76 ]
 
-ptr[1] = Alloc(5)  returned 1012 (searched 2 elements)
-Free List [ Size 2 ]:  [ addr:1000 sz:8 ] [ addr:1020 sz:80 ]
+Free(ptr[0])
+returned 0
+Free List [ Size 2 ] : [ addr:1000 sz:16 ][ addr:1024 sz:76 ]
 
-Free(ptr[1]) returned 0
-Free List [ Size 3 ]:  [ addr:1000 sz:8 ] [ addr:1008 sz:12 ] [ addr:1020 sz:80 ]
+ptr[2] = Alloc(9) returned 1004 (searched 2 elements) 
+Free List [ Size 1 ] : [ addr:1024 sz:76 ]
 
-ptr[2] = Alloc(8)  returned 1012 (searched 3 elements)
-Free List [ Size 2 ]:  [ addr:1000 sz:8 ] [ addr:1020 sz:80 ]
+ptr[3] = Alloc(10) returned 1028 (searched 1 elements) 
+Free List [ Size 1 ] : [ addr:1040 sz:60 ]
 
 As you can see, the first allocation operation (an allocation) returns the
 following information:
 
-ptr[0] = Alloc(3)  returned 1004 (searched 1 elements)
-Free List [ Size 1 ]:  [ addr:1008 sz:92 ]
+ptr[0] = Alloc(10) returned 1004 (searched 1 elements) 
+Free List [ Size 1 ] : [ addr:1016 sz:84 ]
 ```
 
 Because the initial state of the free list is just one large element, it is
-easy to guess that the Alloc(3) request will succeed. Further, it will just
+easy to guess that the Alloc(10) request will succeed. Further, it will just
 return the first chunk of memory and make the remainder into a free list. The
 pointer returned will be just beyond the header (address:1004), and the
-allocated space is rounded up to 4 bytes, leaving the free list with 92 bytes
-starting at 1008. 
+allocated space is rounded up to 4 bytes, leaving the free list with 84 bytes
+starting at 1016. 
 
 The next operation is a Free, of "ptr[0]" which is what stores the results of
 the previous allocation request. As you can expect, this free will succeed
 (thus returning "0"), and the free list now looks a little more complicated:
 
 ```sh
-Free(ptr[0]) returned 0
-Free List [ Size 2 ]:  [ addr:1000 sz:8 ] [ addr:1008 sz:92 ]
+Free(ptr[0])
+returned 0
+Free List [ Size 2 ] : [ addr:1000 sz:16 ][ addr:1024 sz:76 ]
 ```
 
 Indeed, because we are NOT coalescing the free list, we now have two elements
-on it, the first being 8 bytes large and holding the just-returned space, and
-the second being the 92-byte chunk. 
+on it, the first being 16 bytes large and holding the just-returned space, and
+the second being the 76-byte chunk. 
 
 We can indeed turn on coalescing via the -C flag, and the result is:
 
 ```sh
 prompt> cargo run malloc -S 100 -b 1000 -H 4 -a 4 -l ADDRSORT -p BEST -n 5 -c -C
-ptr[0] = Alloc(3)  returned 1004 (searched 1 elements)
-Free List [ Size 1 ]:  [ addr:1008 sz:92 ]
 
-Free(ptr[0]) returned 0
-Free List [ Size 1 ]:  [ addr:1000 sz:100 ]
+ptr[0] = Alloc(10) returned 1004 (searched 1 elements) 
+Free List [ Size 1 ] : [ addr:1016 sz:84 ]
 
-ptr[1] = Alloc(5)  returned 1004 (searched 1 elements)
-Free List [ Size 1 ]:  [ addr:1012 sz:88 ]
+ptr[1] = Alloc(3) returned 1020 (searched 1 elements) 
+Free List [ Size 1 ] : [ addr:1024 sz:76 ]
 
-Free(ptr[1]) returned 0
-Free List [ Size 1 ]:  [ addr:1000 sz:100 ]
+Free(ptr[0])
+returned 0
+Free List [ Size 2 ] : [ addr:1000 sz:16 ][ addr:1024 sz:76 ]
 
-ptr[2] = Alloc(8)  returned 1004 (searched 1 elements)
-Free List [ Size 1 ]:  [ addr:1012 sz:88 ]
+ptr[2] = Alloc(9) returned 1004 (searched 2 elements) 
+Free List [ Size 1 ] : [ addr:1024 sz:76 ]
+
+ptr[3] = Alloc(10) returned 1028 (searched 1 elements) 
+Free List [ Size 1 ] : [ addr:1040 sz:60 ]
 ```
 
 You can see that when the Free operations take place, the free list is
