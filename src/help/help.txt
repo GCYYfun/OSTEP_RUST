@@ -1,0 +1,35 @@
+使用手册：
+
+Simulation cpu_intro CPU模拟
+
+    cargo run process_run -l 5:100 
+    运行 查看 进程在CPU上状态发生变化
+
+    cargp run process_run -h
+    查看更多使用方法 (具体参见README)
+
+
+
+Simulation cpu_api (尚未提供)
+
+    cargo run fork 
+
+
+
+Simulation cpu_sched 简单调度模拟
+
+    cargo run scheduler -p FIFO -j 3 -s 100 
+    运行 查看 不同的调度策略的执行
+
+    cargp run scheduler -h
+    查看更多使用方法 (具体参见README)
+
+
+
+Simulation cpu_sched_lottery 乐透调度模拟
+
+    cargo run lottery -j 2 -s 0 
+    运行 查看 lottery调度算法的运行
+
+    cargp run lottery -h
+    查看更多使用方法 (具体参见README)

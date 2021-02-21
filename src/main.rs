@@ -36,6 +36,10 @@ mod dist_afs;
 mod file_implementation;
 mod file_raid;
 
+
+// util
+mod help;
+
 fn main() {
     let args: Vec<String> = env::args().collect::<Vec<String>>();
     let args: Vec<&str> = args.iter().map(AsRef::as_ref).collect();
@@ -46,7 +50,9 @@ fn main() {
     }
 
     match args[1] {
-        "help" => {}
+        "help" => {
+            help::help();
+        }
         "process_run" | "pr" => {
             cpu_intro::parse_op(args);
         }
