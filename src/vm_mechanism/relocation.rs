@@ -36,7 +36,7 @@ struct RelocationOption {
 impl RelocationOption {
     pub fn new() -> RelocationOption {
         RelocationOption {
-            seed: 0,
+            seed: 1,
             asize: String::from("1k"),
             psize: String::from("16k"),
             num: 5,

@@ -1,7 +1,7 @@
 
 # Overview
 
-This program, malloc.py, allows you to see how a simple memory allocator
+This program, malloc.rs, allows you to see how a simple memory allocator
 works. Here are the options that you have at your disposal:
 
 ```sh
@@ -38,7 +38,7 @@ look like, as well as the success or failure of each operation.
 Here is a simple example:
 
 ```sh
-prompt> ./malloc.py -S 100 -b 1000 -H 4 -a 4 -l ADDRSORT -p BEST -n 5 
+prompt> cargo run malloc -S 100 -b 1000 -H 4 -a 4 -l ADDRSORT -p BEST -n 5 
 
 ptr[0] = Alloc(3)  returned ?
 List?
@@ -69,7 +69,7 @@ free list after each operation.
 Here we look at the results by using the -c option.
 
 ```sh
-prompt> ./malloc.py -S 100 -b 1000 -H 4 -a 4 -l ADDRSORT -p BEST -n 5 -c
+prompt> cargo run malloc -S 100 -b 1000 -H 4 -a 4 -l ADDRSORT -p BEST -n 5 -c
 
 ptr[0] = Alloc(3)  returned 1004 (searched 1 elements)
 Free List [ Size 1 ]:  [ addr:1008 sz:92 ]
@@ -116,7 +116,7 @@ the second being the 92-byte chunk.
 We can indeed turn on coalescing via the -C flag, and the result is:
 
 ```sh
-prompt> ./malloc.py -S 100 -b 1000 -H 4 -a 4 -l ADDRSORT -p BEST -n 5 -c -C
+prompt> cargo run malloc -S 100 -b 1000 -H 4 -a 4 -l ADDRSORT -p BEST -n 5 -c -C
 ptr[0] = Alloc(3)  returned 1004 (searched 1 elements)
 Free List [ Size 1 ]:  [ addr:1008 sz:92 ]
 

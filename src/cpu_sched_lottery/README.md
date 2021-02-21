@@ -10,27 +10,28 @@ revealing the answers.
 prompt> cargo run lottery -j 2 -s 0
 ...
 Here is the job list, with the run time of each job: 
-  Job 0 ( length = 8, tickets = 75 )
-  Job 1 ( length = 4, tickets = 25 )
+  Job 0 ( length = 6, tickets = 65 )
+  Job 1 ( length = 7, tickets = 70 )
 
 Here is the set of random numbers you will need (at most):
-Random 511275
-Random 404934
-Random 783799
-Random 303313
-Random 476597
-Random 583382
-Random 908113
-Random 504687
-Random 281838
-Random 755804
-Random 618369
-Random 250506
+Random 729870 
+Random 465922 
+Random 507365 
+Random 699143 
+Random 560967 
+Random 60171 
+Random 195347 
+Random 879111 
+Random 580058 
+Random 549531 
+Random 414773 
+Random 828985 
+Random 823539 
 ```
 
 When you run the simulator in this manner, it first assigns you some random
-jobs (here of lengths 8, and 4), each with some number of tickets (here 75 and
-25, respectively). The simulator also gives you a list of random numbers,
+jobs (here of lengths 6, and 5), each with some number of tickets (here 65 and
+70, respectively). The simulator also gives you a list of random numbers,
 which you will need to determine what the lottery scheduler will do. The
 random numbers are chosen to be between 0 and a large number; thus, you'll
 have to use the modulo operator to compute the lottery winner (i.e., winner
@@ -43,32 +44,73 @@ Running with -c shows exactly what you are supposed to calculate:
 prompt> cargo run lottery -j 2 -s 0 -c
 ...
 ** Solutions **
-Random 511275 -> Winning ticket 75 (of 100) -> Run 1
-  Jobs:  (  job:0 timeleft:8 tix:75 ) (* job:1 timeleft:4 tix:25 )
-Random 404934 -> Winning ticket 34 (of 100) -> Run 0
-  Jobs:  (* job:0 timeleft:8 tix:75 ) (  job:1 timeleft:3 tix:25 )
-Random 783799 -> Winning ticket 99 (of 100) -> Run 1
-  Jobs:  (  job:0 timeleft:7 tix:75 ) (* job:1 timeleft:3 tix:25 )
-Random 303313 -> Winning ticket 13 (of 100) -> Run 0
-  Jobs:  (* job:0 timeleft:7 tix:75 ) (  job:1 timeleft:2 tix:25 )
-Random 476597 -> Winning ticket 97 (of 100) -> Run 1
-  Jobs:  (  job:0 timeleft:6 tix:75 ) (* job:1 timeleft:2 tix:25 )
-Random 583382 -> Winning ticket 82 (of 100) -> Run 1
-  Jobs:  (  job:0 timeleft:6 tix:75 ) (* job:1 timeleft:1 tix:25 )
---> JOB 1 DONE at time 6
-Random 908113 -> Winning ticket 13 (of 75) -> Run 0
-  Jobs:  (* job:0 timeleft:6 tix:75 ) (  job:1 timeleft:0 tix:--- )
-Random 504687 -> Winning ticket 12 (of 75) -> Run 0
-  Jobs:  (* job:0 timeleft:5 tix:75 ) (  job:1 timeleft:0 tix:--- )
-Random 281838 -> Winning ticket 63 (of 75) -> Run 0
-  Jobs:  (* job:0 timeleft:4 tix:75 ) (  job:1 timeleft:0 tix:--- )
-Random 755804 -> Winning ticket 29 (of 75) -> Run 0
-  Jobs:  (* job:0 timeleft:3 tix:75 ) (  job:1 timeleft:0 tix:--- )
-Random 618369 -> Winning ticket 69 (of 75) -> Run 0
-  Jobs:  (* job:0 timeleft:2 tix:75 ) (  job:1 timeleft:0 tix:--- )
-Random 250506 -> Winning ticket 6 (of 75) -> Run 0
-  Jobs:  (* job:0 timeleft:1 tix:75 ) (  job:1 timeleft:0 tix:--- )
---> JOB 0 DONE at time 12
+Random 729870 -> Winning ticket 60 (of 135) -> Run 0 
+  Jobs:
+* job : 0 timeletft: 6 tix: 65 
+  job : 1 timeletft: 7 tix: 70 
+
+Random 465922 -> Winning ticket 37 (of 135) -> Run 0 
+  Jobs:
+* job : 0 timeletft: 5 tix: 65 
+  job : 1 timeletft: 7 tix: 70 
+
+Random 507365 -> Winning ticket 35 (of 135) -> Run 0 
+  Jobs:
+* job : 0 timeletft: 4 tix: 65 
+  job : 1 timeletft: 7 tix: 70 
+
+Random 699143 -> Winning ticket 113 (of 135) -> Run 1 
+  Jobs:
+  job : 0 timeletft: 3 tix: 65 
+* job : 1 timeletft: 7 tix: 70 
+
+Random 560967 -> Winning ticket 42 (of 135) -> Run 0 
+  Jobs:
+* job : 0 timeletft: 3 tix: 65 
+  job : 1 timeletft: 6 tix: 70 
+
+Random 60171 -> Winning ticket 96 (of 135) -> Run 1 
+  Jobs:
+  job : 0 timeletft: 2 tix: 65 
+* job : 1 timeletft: 6 tix: 70 
+
+Random 195347 -> Winning ticket 2 (of 135) -> Run 0 
+  Jobs:
+* job : 0 timeletft: 2 tix: 65 
+  job : 1 timeletft: 5 tix: 70 
+
+Random 879111 -> Winning ticket 126 (of 135) -> Run 1 
+  Jobs:
+  job : 0 timeletft: 1 tix: 65 
+* job : 1 timeletft: 5 tix: 70 
+
+Random 580058 -> Winning ticket 98 (of 135) -> Run 1 
+  Jobs:
+  job : 0 timeletft: 1 tix: 65 
+* job : 1 timeletft: 4 tix: 70 
+
+Random 549531 -> Winning ticket 81 (of 135) -> Run 1 
+  Jobs:
+  job : 0 timeletft: 1 tix: 65 
+* job : 1 timeletft: 3 tix: 70 
+
+Random 414773 -> Winning ticket 53 (of 135) -> Run 0 
+  Jobs:
+* job : 0 timeletft: 1 tix: 65 
+  job : 1 timeletft: 2 tix: 70 
+
+--> JOB 0 DONE at time 11
+Random 828985 -> Winning ticket 45 (of 70) -> Run 1 
+  Jobs:
+  job : 0 timeletft: 0 tix: --- 
+* job : 1 timeletft: 2 tix: 70 
+
+Random 823539 -> Winning ticket 59 (of 70) -> Run 1 
+  Jobs:
+  job : 0 timeletft: 0 tix: --- 
+* job : 1 timeletft: 1 tix: 70 
+
+--> JOB 1 DONE at time 13
 ```
 
 As you can see from this trace, what you are supposed to do is use the random
@@ -79,19 +121,20 @@ lottery scheduler does, but by hand!
 
 Just to make this absolutely clear, let's look at the first decision made in
 the example above. At this point, we have two jobs (job 0 which has a runtime
-of 8 and 75 tickets, and job 1 which has a runtime of 4 and 25 tickets). The
-first random number we are given is 511275. As there are 100 tickets in the
-system, 511275 \% 100 is 75, and thus 75 is our winning ticket.
+of 6 and 65 tickets, and job 1 which has a runtime of 7 and 75 tickets). The
+first random number we are given is 729870. As there are 100 tickets in the
+system, 729870 % 135 is 60, and thus 60 is our winning ticket.
 
-If ticket 75 is the winner, we simply search through the job list until we
-find it. The first entry, for job 0, has 75 tickets (0 through 74), and thus
-does not win; the next entry is for job 1, and thus we have found our winner,
-so we run job 1 for the quantum length (1 in this example). All of this is
+If ticket 60 is the winner, we simply search through the job list until we
+find it. The first entry, for job 0, has 60 tickets (0 through 64), and thus
+does win; so we run job 0 for the quantum length (1 in this example). All of this is
 shown in the print out as follows:
 
 ```sh
-Random 511275 -> Winning ticket 75 (of 100) -> Run 1
-  Jobs:  (  job:0 timeleft:8 tix:75 ) (* job:1 timeleft:4 tix:25 )
+Random 729870 -> Winning ticket 60 (of 135) -> Run 0 
+  Jobs:
+* job : 0 timeletft: 6 tix: 65 
+  job : 1 timeletft: 7 tix: 70 
 ```
 
 As you can see, the first line summarizes what happens, and the second simply

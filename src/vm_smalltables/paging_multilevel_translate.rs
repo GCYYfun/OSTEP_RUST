@@ -187,7 +187,7 @@ impl OS {
             print!("page  {}: ", i);
             for j in 0..self.page_size {
                 print!(
-                    "{:x} ",
+                    "{:02x} ",
                     self.memory[(i as usize * self.page_size as usize) + j as usize]
                 );
             }
@@ -377,7 +377,7 @@ fn execute_pmt_op(options: PMTOption) {
                 println!("      --> Fault (page table entry not valid)");
             }
         } else {
-            println!("Virtual Address %{:x}: Translates To What Physical Address (And Fetches what Value)? Or Fault?" ,_vaddr);
+            println!("Virtual Address {:x}: Translates To What Physical Address (And Fetches what Value)? Or Fault?" ,_vaddr);
         }
     }
 }

@@ -38,19 +38,19 @@ To run with the default flags, type relocation.py at the command line. The
 result should be something like this:
 
 ```sh
-prompt> ./relocation.py 
+prompt> cargo run relocation
 ...
 Base-and-Bounds register information:
 
-  Base   : 0x00003082 (decimal 12418)
-  Limit  : 472
+  Base   :  0x19c2   (decimal 6594 )
+  Limit  :   396 
 
 Virtual Address Trace
-  VA  0: 0x01ae (decimal:430) -> PA or violation?
-  VA  1: 0x0109 (decimal:265) -> PA or violation?
-  VA  2: 0x020b (decimal:523) -> PA or violation?
-  VA  3: 0x019e (decimal:414) -> PA or violation?
-  VA  4: 0x0322 (decimal:802) -> PA or violation?
+  VA  0 : 0x3f0 (decimal : 1008 )--> PA or segmentation violation?
+  VA  1 : 0x52 (decimal : 82 )--> PA or segmentation violation?
+  VA  2 : 0xd8 (decimal : 216 )--> PA or segmentation violation?
+  VA  3 : 0x262 (decimal : 610 )--> PA or segmentation violation?
+  VA  4 : 0x18c (decimal : 396 )--> PA or segmentation violation?
 ```
 
 For each virtual address, either write down the physical address it 
@@ -66,27 +66,27 @@ whether they are valid or not, and if valid, the resulting physical
 addresses. For convenience, all numbers are given both in hex and decimal.
 
 ```sh
-prompt> ./relocation.py -c
+prompt> cargo run relocation -c
 ...
 Virtual Address Trace
-  VA  0: 0x01ae (decimal:430) -> VALID: 0x00003230 (dec:12848)
-  VA  1: 0x0109 (decimal:265) -> VALID: 0x0000318b (dec:12683)
-  VA  2: 0x020b (decimal:523) -> SEGMENTATION VIOLATION
-  VA  3: 0x019e (decimal:414) -> VALID: 0x00003220 (dec:12832)
-  VA  4: 0x0322 (decimal:802) -> SEGMENTATION VIOLATION
+  VA  0 : 0x3f0 (decimal : 1008 ) --> SEGMENTATION VIOLATION
+  VA  1 : 0x52 (decimal : 82 ) --> VALID: 0x1a14 (decimal: 6676)
+  VA  2 : 0xd8 (decimal : 216 ) --> VALID: 0x1a9a (decimal: 6810)
+  VA  3 : 0x262 (decimal : 610 ) --> SEGMENTATION VIOLATION
+  VA  4 : 0x18c (decimal : 396 ) --> SEGMENTATION VIOLATION
 ```
 
-With a base address of 12418 (decimal), address 430 is within bounds (i.e., it
-is less than the limit register of 472) and thus translates to 430 added to
-12418 or 12848. A few of the addresses shown above are out of bounds (523,
-802), as they are in excess of the bounds. Pretty simple, no? Indeed, that is
+With a base address of 6594 (decimal), address 1008 is out  bounds (i.e., it
+is more than the limit register of 396) and thus translates to 1008 added to
+6594 or 7602. A few of the addresses shown above are within (82,
+216), as they are inferior to the bounds. Pretty simple, no? Indeed, that is
 one of the beauties of base and bounds: it's so darn simple!
 
 There are a few flags you can use to control what's going on better:
 
 ```sh
-prompt> ./relocation.py -h
-Usage: relocation.py [options]
+prompt> cargo run relocation -h
+Usage: relocation [options]
 
 Options:
   -h, --help            show this help message and exit

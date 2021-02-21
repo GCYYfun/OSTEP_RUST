@@ -6,7 +6,7 @@ use std::env;
     Virtualization
 */
 // CPU
-mod cpu_api;
+// mod cpu_api;
 mod cpu_intro; // 完全可用 测试完毕
 mod cpu_sched; // 应该可用 测试完毕
 mod cpu_sched_lottery; // done
@@ -56,9 +56,9 @@ fn main() {
         "process_run" | "pr" => {
             cpu_intro::parse_op(args);
         }
-        "fork" => {
-            cpu_api::pares_op(args);
-        }
+        // "fork" => {
+        //     cpu_api::pares_op(args);
+        // }
         "scheduler" => {
             cpu_sched::parse_op(args);
         }

@@ -166,12 +166,8 @@ fn execute_plt_op(options: PLTOption) {
     );
 
     let pages = (psize / pagesize) as usize;
-    let used = vec![0; pages];
+    let mut used = vec![0; pages];
     let mut pt: Vec<i32> = Vec::new();
-
-    // for i in 0..pages {
-    //     used.push(0);
-    // }
 
     let vpages = asize / pagesize;
 
@@ -209,12 +205,13 @@ fn execute_plt_op(options: PLTOption) {
                 let rand_y: f32 = rng.gen();
                 let u = (pages as f32 * rand_y) as usize;
                 if used[u] == 0 {
+                    used[u] = 1;
                     if options.verbose == true {
                         print!("  [  {}  ]  ", v);
                     } else {
                         print!(" ");
                     }
-                    println!(" 0x{:x}", (0x80000000u32 | u as u32));
+                    println!(" 0x{:08x}", (0x80000000u32 | u as u32));
                     pt.insert(v as usize, u as i32);
                     break;
                 } else {
@@ -223,7 +220,7 @@ fn execute_plt_op(options: PLTOption) {
                     } else {
                         print!(" ");
                     }
-                    println!("0x{:x}", 0);
+                    println!(" 0x{:08x}", 0);
                     pt.insert(v as usize, -1);
                     break;
                 }
@@ -252,7 +249,7 @@ fn execute_plt_op(options: PLTOption) {
         let vaddr = i;
         if options.solve == false {
             println!(
-                "  VA 0x{:x} (decimal:    {}) --> PA or invalid address?",
+                "  VA 0x{:08x} (decimal:    {}) --> PA or invalid address?",
                 vaddr, vaddr
             );
         } else {
@@ -261,7 +258,7 @@ fn execute_plt_op(options: PLTOption) {
             let vpn = (vaddr & vpnmask) >> pagebits;
             if pt[vpn as usize] < 0 {
                 println!(
-                    "  VA 0x{:x} (decimal:   {} ) -->  Invalid (VPN {} not valid)",
+                    "  VA 0x{:08x} (decimal:     {}) --> Invalid (VPN {} not valid)",
                     vaddr, vaddr, vpn
                 );
             } else {
@@ -269,7 +266,7 @@ fn execute_plt_op(options: PLTOption) {
                 let offset = vaddr & pagemask;
                 _paddr = ((pfn as u32) << pagebits) | offset;
                 println!(
-                    "  VA 0x{:x} (decimal:    {}) --> {:x} (decimal    {}) [VPN {}]",
+                    "  VA 0x{:08x} (decimal:     {}) --> 0x{:08x} (decimal    {}) [VPN {}]",
                     vaddr, vaddr, _paddr, _paddr, vpn
                 );
             }

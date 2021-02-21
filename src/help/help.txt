@@ -19,7 +19,7 @@ Simulation cpu_api (尚未提供)
 Simulation cpu_sched 简单调度模拟
 
     cargo run scheduler -p FIFO -j 3 -s 100 
-    运行 查看 不同的调度策略的执行
+    运行 查看 不同的调度策略的运行
 
     cargp run scheduler -h
     查看更多使用方法 (具体参见README)
@@ -32,4 +32,64 @@ Simulation cpu_sched_lottery 乐透调度模拟
     运行 查看 lottery调度算法的运行
 
     cargp run lottery -h
+    查看更多使用方法 (具体参见README)
+
+
+
+Simulation vm_mechanism 地址翻译模拟
+
+    cargo run relocation
+    运行 查看 地址翻译的运行
+
+    cargo run relocation -h
+    查看更多使用方法 (具体参见README)
+
+
+
+Simulation vm_segmentation 段模式模拟 (只有x86有段模式)
+
+    cargo run segmentation
+    运行 查看 段模式的运行
+
+    cargo run segmentation -h
+    查看更多使用方法 (具体参见README)
+
+
+
+Simulation vm_freespace 堆内存分配器模拟 (尚未提供)
+
+    cargo run vm_freespace
+    运行 查看 堆内存分配器的运行
+
+    cargo run vm_freespace -h
+    查看更多使用方法 (具体参见README)
+
+
+
+Simulation vm_paging 线性页表地址转换模拟
+
+    cargo run paging_linear_translate
+    运行 查看 线性页表地址转换的运行
+
+    cargo run paging_linear_translate -h
+    查看更多使用方法 (具体参见README)
+
+
+
+Simulation vm_smalltables 多级页表地址转换模拟
+
+    cargo run paging_multilevel_translate
+    运行 查看 多级页表地址转换的运行
+
+    cargo run paging_multilevel_translate -h
+    查看更多使用方法 (具体参见README)
+
+
+
+Simulation vm_beyondphys_policy 页表替换策略模拟
+
+    cargo run paging_policy
+    运行 查看 线性地址转换的运行
+
+    cargo run paging_policy -h
     查看更多使用方法 (具体参见README)

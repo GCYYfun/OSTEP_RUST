@@ -1,7 +1,7 @@
 
 # Overview
 
-This simulator, paging-policy.py, allows you to play around with different
+This simulator, paging-policy, allows you to play around with different
 page-replacement policies. For example, let's examine how LRU performs with a
 series of page references with a cache of size 3:
 
@@ -12,7 +12,7 @@ series of page references with a cache of size 3:
 To do so, run the simulator as follows:
 
 ```sh
-prompt> ./paging-policy.py --addresses=0,1,2,0,1,3,0,3,1,2,1 
+prompt> cargo run paging_policy --addresses=0,1,2,0,1,3,0,3,1,2,1 
                            --policy=LRU --cachesize=3 -c
 
 And what you would see is:
@@ -45,7 +45,7 @@ addresses are specified/generated, and other important parameters such as the
 size of the cache. 
 
 ```sh
-prompt> ./paging-policy.py --help
+prompt> cargo run paging_policy --help
 Usage: paging-policy.py [options]
 
 Options:
@@ -83,7 +83,7 @@ addresses the program should randomly generate, with "-s/--seed" used to
 specify a different random seed. For example:
 
 ```sh
-prompt> ./paging-policy.py -s 10 -n 3
+prompt> cargo run paging_policy -s 10 -n 3
 .. .
 Assuming a replacement policy of FIFO, and a cache of size 3 pages,
 figure out whether each of the following page references hit or miss
@@ -102,7 +102,7 @@ for you by passing in the same arguments but with "-c" (showing just the
 relevant part here):
 
 ```sh
-prompt> ./paging-policy.py -s 10 -n 3 -c
+prompt> cargo run paging_policy -s 10 -n 3 -c
 ...
 Solving...
 
@@ -128,9 +128,9 @@ from a real application or otherwise use a long trace as input.
 One last piece of fun: why are these two examples interesting?
 
 ```sh
-./paging-policy.py -C 3 -a 1,2,3,4,1,2,5,1,2,3,4,5
+cargo run paging_policy -C 3 -a 1,2,3,4,1,2,5,1,2,3,4,5
 ```
 and
 ```sh
-./paging-policy.py -C 4 -a 1,2,3,4,1,2,5,1,2,3,4,5
+cargo run paging_policy -C 4 -a 1,2,3,4,1,2,5,1,2,3,4,5
 ```

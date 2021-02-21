@@ -3,7 +3,7 @@
 
 This fun little homework tests if you understand how a multi-level page table
 works. And yes, there is some debate over the use of the term fun in the
-previous sentence. The program is called: `paging-multilevel-translate.py`
+previous sentence. The program is called: `paging-multilevel-translate`
 
 Some basic assumptions:
 

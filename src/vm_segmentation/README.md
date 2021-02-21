@@ -48,13 +48,9 @@ answers.
 For example, to run with the default flags, type:
 
 ```sh
-prompt> ./segmentation.py 
+prompt> cargo run segmentation
 ```
-or
 
-```sh 
-prompt> python ./segmentation.py 
-```
 
 You should see this:
 ```sh
@@ -115,7 +111,7 @@ address spaces and physical memories. For example, to experiment with
 segmentation in a tiny system, you might type:
 
 ```sh
-prompt> ./segmentation.py -s 100 -a 16 -p 32
+prompt> cargo run segmentation -s 100 -a 16 -p 32
 ARG seed 0
 ARG address space size 16
 ARG phys mem size 32
@@ -162,7 +158,7 @@ and "gigabytes". Thus, if you wanted to do some translations with a 1-MB
 address space set in a 32-MB physical memory, you might type:
 
 ```sh
-prompt> ./segmentation.py -a 1m -p 32m
+prompt> cargo run segmentation -a 1m -p 32m
 ```
 
 If you want to get even more specific, you can set the base register and limit
@@ -172,7 +168,7 @@ them and see.
 Finally, you can always run 
 
 ```sh
-prompt> ./segmentation.py -h 
+prompt> cargo run segmentation -h 
 ```
 
 to get a complete list of flags and options.

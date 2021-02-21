@@ -1,5 +1,5 @@
 
-Usage: cargo run paging-linear-translate [options]
+Usage: cargo run paging_linear_translate [options]
 
 Options:
   -h, --help            show this help message and exit
