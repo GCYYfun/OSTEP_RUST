@@ -287,12 +287,12 @@ impl Scheduler {
         self.curr_proc = 0;
         self.move_to_running(STATE_READY);
 
-        print!("Time");
+        print!("{:<12}", "Time");
         for pid in 0..self.process_info.len() {
-            print!("   PID:{}   ", pid);
+            print!("{:>12}:{:<12}", "PID", pid);
         }
-        print!("       CPU        ");
-        print!("       IOs     ");
+        print!("{:^24}", "CPU");
+        print!("{:^24}", "IOs");
         println!("");
 
         let mut io_busy = 0;
@@ -349,32 +349,35 @@ impl Scheduler {
                 cpu_busy += 1;
             }
             if io_done {
-                print!(" {} *", clock_tick);
+                print!("{}{:<12}", clock_tick, "*");
             } else {
-                print!(" {} ", clock_tick);
+                print!("{:<12}", clock_tick);
             }
 
             for pid in 0..self.process_info.len() {
                 if pid == self.curr_proc as usize && instruction_to_execute != "" {
-                    print!("RUN: {} ", instruction_to_execute);
+                    print!("{:>12}: {:<12}", "RUN", instruction_to_execute);
                 } else {
-                    print!("RUN: {} ", self.process_info[&pid][PROC_STATE][0]);
+                    print!(
+                        "{:>12}: {:<12}",
+                        "RUN", self.process_info[&pid][PROC_STATE][0]
+                    );
                 }
             }
 
             if instruction_to_execute == "" {
-                print!("               ");
+                print!("{:^24}", "_");
             } else {
-                print!("               1");
+                print!("{:^24}", "1");
             }
 
             let num_outstanding = self.get_ios_in_flight(clock_tick);
 
             if num_outstanding > 0 {
-                print!("   {}  ", num_outstanding);
+                print!("{:^24}", num_outstanding);
                 io_busy += 1;
             } else {
-                print!("      ");
+                print!("{:^24}", "_");
             }
 
             println!("");
@@ -482,10 +485,10 @@ pub fn parse_op(op_vec: Vec<&str>) {
         }
     }
 
-    println!(
-        "ARGS:↓\n\nseed:{},\nprocess_list:{},\nio_length:{},\nsolve:{},\nprint_stats:{}\n",
-        proc_op.seed, proc_op.process_list, proc_op.io_length, proc_op.solve, proc_op.print_stats
-    );
+    // println!(
+    //     "ARGS:↓\n\nseed:{},\nprocess_list:{},\nio_length:{},\nsolve:{},\nprint_stats:{}\n",
+    //     proc_op.seed, proc_op.process_list, proc_op.io_length, proc_op.solve, proc_op.print_stats
+    // );
 
     execute_process_op(proc_op);
 }
@@ -540,14 +543,14 @@ fn execute_process_op(options: ProcessOption) {
         println!("");
         println!("Stats: Total Time {}", clock_tick);
         println!(
-            "Stats: CPU Busy {} ({})",
+            "Stats: CPU Busy {} ({:.2}%)",
             cpu_busy,
-            100.0 * (cpu_busy / clock_tick) as f64
+            100.0 * (cpu_busy as f64 / clock_tick as f64)
         );
         println!(
-            "Stats: IO Busy  {} ({})",
+            "Stats: IO Busy  {} ({:.2}%)",
             io_busy,
-            100.0 * (io_busy / clock_tick) as f64
+            100.0 * (io_busy as f64 / clock_tick as f64)
         );
         println!("");
     }

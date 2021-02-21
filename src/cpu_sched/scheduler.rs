@@ -33,7 +33,7 @@ pub fn parse_op(op_vec: Vec<&str>) {
     let mut sche_op = SchedulerOption::new();
     let mut i = 2;
     while i < op_vec.len() {
-        println!("{}", op_vec[i]);
+        // println!("{}", op_vec[i]);
         match op_vec[i] {
             "-h" | "--help" => {
                 print!("{}", HELP);
@@ -76,18 +76,15 @@ pub fn parse_op(op_vec: Vec<&str>) {
     execute_scheduler_op(sche_op);
 }
 
-#[derive(Debug, PartialEq, PartialOrd,Clone)]
+#[derive(Debug, PartialEq, PartialOrd, Clone)]
 struct Job {
-    jobnum:u32,
-    runtime:f32,
+    jobnum: u32,
+    runtime: f32,
 }
 
 impl Job {
-    fn new(jobnum:u32,runtime:f32) -> Self {
-        Job {
-            jobnum,
-            runtime
-        }
+    fn new(jobnum: u32, runtime: f32) -> Self {
+        Job { jobnum, runtime }
     }
 }
 
@@ -112,7 +109,7 @@ fn execute_scheduler_op(mut options: SchedulerOption) {
         for jobnum in 0..options.jobs {
             let rand_x: f64 = rng.gen();
             let runtime = (options.maxlen as f64 * rand_x) as u32 + 1;
-            let v = Job::new(jobnum,runtime as f32);
+            let v = Job::new(jobnum, runtime as f32);
             // v.push(jobnum as f32);
             // v.push(runtime as f32);
             joblist.push(v);
@@ -122,14 +119,18 @@ fn execute_scheduler_op(mut options: SchedulerOption) {
         let mut jobnum = 0;
         for runtime in options.jlist.split(",") {
             // let mut v: Vec<f32> = Vec::new();
-            let v = Job::new(jobnum,runtime.to_string().parse::<f32>().unwrap());
+            let v = Job::new(jobnum, runtime.to_string().parse::<f32>().unwrap());
             // v.push(jobnum as f32);
             // v.push(runtime.to_string().parse::<f32>().unwrap());
             joblist.push(v);
             jobnum += 1;
         }
         for job in &joblist {
-            println!("Job : {}  (length = {} )", job.jobnum, job.runtime.to_string());
+            println!(
+                "  Job : {}  (length = {} )",
+                job.jobnum,
+                job.runtime.to_string()
+            );
         }
     }
 
@@ -174,6 +175,7 @@ fn execute_scheduler_op(mut options: SchedulerOption) {
                 t += runtime;
                 count = count + 1;
             }
+            println!();
             println!(
                 "  Average -- Response: {}  Turnaround : {}  Wait : {}",
                 response_sum / count as f32,
@@ -183,15 +185,12 @@ fn execute_scheduler_op(mut options: SchedulerOption) {
         }
 
         if options.policy == "RR" {
-            // not impl RR
             println!("Execution trace:");
 
-            let mut turnaround:HashMap<usize,f32> = HashMap::new();
-            let mut response:HashMap<usize,f32> = HashMap::new();
-            let mut lastran:HashMap<usize,f32> = HashMap::new();
-            let mut wait:HashMap<usize,f32> = HashMap::new();
-
-            
+            let mut turnaround: HashMap<usize, f32> = HashMap::new();
+            let mut response: HashMap<usize, f32> = HashMap::new();
+            let mut lastran: HashMap<usize, f32> = HashMap::new();
+            let mut wait: HashMap<usize, f32> = HashMap::new();
 
             let mut jobcount = joblist.len();
             for _i in 0..jobcount {
@@ -201,20 +200,20 @@ fn execute_scheduler_op(mut options: SchedulerOption) {
                 response.entry(_i).or_insert(-1f32);
             }
 
-            let mut runlist : Vec<Job> = Vec::new();
+            let mut runlist: Vec<Job> = Vec::new();
 
             for e in &joblist {
                 runlist.push(e.clone());
             }
 
-            let mut thetime  = 0.0f32;
+            let mut thetime = 0.0f32;
 
             while jobcount > 0 {
                 let job = runlist.remove(0);
                 let jobnum = job.jobnum;
                 let mut runtime = job.runtime;
                 let quantum = options.quantum;
-                let mut _ranfor:f32;
+                let mut _ranfor: f32;
 
                 if response[&(jobnum as usize)] == -1f32 {
                     if let Some(x) = response.get_mut(&(jobnum as usize)) {
@@ -226,14 +225,23 @@ fn execute_scheduler_op(mut options: SchedulerOption) {
                     *x += currwait;
                 }
 
-                if runtime > quantum as f32{
+                if runtime > quantum as f32 {
                     runtime -= quantum as f32;
                     _ranfor = quantum as f32;
-                    println!("  [ time {:3} ] Run job {:3} for {:.2} secs",thetime, jobnum, _ranfor);
+                    println!(
+                        "  [ time {:3} ] Run job {:3} for {:.2} secs",
+                        thetime, jobnum, _ranfor
+                    );
                     runlist.push(Job::new(jobnum, runtime));
-                }else {
+                } else {
                     _ranfor = runtime;
-                    println!("  [ time {:3} ] Run job {:3} for {:.2} secs ( DONE at {:.2} )",thetime, jobnum, _ranfor, format!("{:.*}",2,(thetime + job.runtime)));
+                    println!(
+                        "  [ time {:3} ] Run job {:3} for {:.2} secs ( DONE at {:.2} )",
+                        thetime,
+                        jobnum,
+                        _ranfor,
+                        format!("{:.*}", 2, (thetime + job.runtime))
+                    );
                     if let Some(x) = turnaround.get_mut(&(jobnum as usize)) {
                         *x = thetime + _ranfor;
                     }
@@ -251,12 +259,16 @@ fn execute_scheduler_op(mut options: SchedulerOption) {
             let mut response_sum = 0.0;
 
             for i in 0..joblist.len() {
-                turnaround_sum +=  turnaround[&i];
+                turnaround_sum += turnaround[&i];
                 response_sum += response[&i];
                 wait_sum += wait[&i];
-                println!("  Job {:3} -- Response: {:3.2}  Turnaround {:3.2}  Wait {:3.2}",i, response[&i], turnaround[&i], wait[&i]);
+                println!(
+                    "  Job {:3} -- Response: {:3.2}  Turnaround {:3.2}  Wait {:3.2}",
+                    i, response[&i], turnaround[&i], wait[&i]
+                );
             }
             let count = joblist.len();
+            println!();
             println!(
                 "  Average -- Response: {}  Turnaround : {}  Wait : {}",
                 response_sum / count as f32,

@@ -1,4 +1,4 @@
-Usage: lottery.py [options]
+Usage: cargo run lottery [options]
 
 Options:
   -h, --help            show this help message and exit

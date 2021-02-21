@@ -2,9 +2,13 @@
 #![allow(mutable_borrow_reservation_conflict)] // 危险
 use std::env;
 
+/*
+    Virtualization
+*/
 // CPU
-mod cpu_intro; // done
-mod cpu_sched; // done
+mod cpu_api;
+mod cpu_intro; // 完全可用 测试完毕
+mod cpu_sched; // 应该可用 测试完毕
 mod cpu_sched_lottery; // done
 mod cpu_sched_mlfq; // not done
 
@@ -15,6 +19,17 @@ mod vm_mechanism; // done
 mod vm_paging; // done
 mod vm_segmentation; // done
 mod vm_smalltables; // done
+
+/*
+    Concurrency
+*/
+
+// THREADS
+// mod threads_intro;
+
+/*
+    Persistence
+*/
 
 // FILE
 mod dist_afs;
@@ -34,6 +49,9 @@ fn main() {
         "help" => {}
         "process_run" | "pr" => {
             cpu_intro::parse_op(args);
+        }
+        "fork" => {
+            cpu_api::pares_op(args);
         }
         "scheduler" => {
             cpu_sched::parse_op(args);

@@ -1,13 +1,13 @@
 
 # Overview
 
-This program, lottery.py, allows you to see how a lottery scheduler
+This program, lottery, allows you to see how a lottery scheduler
 works. As always, there are two steps to running the program. First, run
 without the -c flag: this shows you what problem to solve without
 revealing the answers. 
 
 ```sh
-prompt> ./lottery.py -j 2 -s 0
+prompt> cargo run lottery -j 2 -s 0
 ...
 Here is the job list, with the run time of each job: 
   Job 0 ( length = 8, tickets = 75 )
@@ -40,7 +40,7 @@ system).
 Running with -c shows exactly what you are supposed to calculate:
 
 ```sh
-prompt> ./lottery.py -j 2 -s 0 -c
+prompt> cargo run lottery -j 2 -s 0 -c
 ...
 ** Solutions **
 Random 511275 -> Winning ticket 75 (of 100) -> Run 1
@@ -103,7 +103,7 @@ exact set of jobs and their ticket values, instead of always using
 randomly-generated job lists.
 
 ```sh
-prompt> ./lottery.py -h
+prompt> cargo run lottery -h
 Usage: lottery.py [options]
 
 Options:

@@ -26,7 +26,7 @@ prompt> cargo run process-run -h
 What you should see is this:
 
 ```sh
-Usage: process-run [options]
+Usage: cargo run process_run [options]
 
 Options:
   -h, --help            show this help message and exit
@@ -171,28 +171,28 @@ What do you think the execution trace will look like? Let's find out:
 
 ```sh
 prompt> cargo run process_run -l 3:0 -L 5 -c
-Time    PID: 0       CPU       IOs
-  1         RUN:io             1
-  2        WAITING                           1
-  3        WAITING                           1
-  4        WAITING                           1
-  5        WAITING                           1
-  6        WAITING                           1
-  7*   RUN:io_done             1
-  8         RUN:io             1
-  9        WAITING                           1
- 10        WAITING                           1
- 11        WAITING                           1
- 12        WAITING                           1
- 13        WAITING                           1
- 14*   RUN:io_done             1
- 15         RUN:io             1
- 16        WAITING                           1
- 17        WAITING                           1
- 18        WAITING                           1
- 19        WAITING                           1
- 20        WAITING                           1
- 21*   RUN:io_done             1
+Time                 PID:0                     CPU                     IOs           
+1                    RUN: io                     1                       _            
+2                    RUN: WAITING                _                       1            
+3                    RUN: WAITING                _                       1            
+4                    RUN: WAITING                _                       1            
+5                    RUN: WAITING                _                       1            
+6                    RUN: WAITING                _                       1            
+7*                    RUN: io_done                1                       _            
+8                    RUN: io                     1                       _            
+9                    RUN: WAITING                _                       1            
+10                   RUN: WAITING                _                       1            
+11                   RUN: WAITING                _                       1            
+12                   RUN: WAITING                _                       1            
+13                   RUN: WAITING                _                       1            
+14*                    RUN: io_done                1                       _            
+15                   RUN: io                     1                       _            
+16                   RUN: WAITING                _                       1            
+17                   RUN: WAITING                _                       1            
+18                   RUN: WAITING                _                       1            
+19                   RUN: WAITING                _                       1            
+20                   RUN: WAITING                _                       1            
+21*                    RUN: io_done                1                       _  
 ```
 
 As you can see, the program just issues three I/Os. When each I/O is issued,

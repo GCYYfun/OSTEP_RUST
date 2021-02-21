@@ -1,4 +1,4 @@
-Usage: process-run [options]
+Usage: cargp run process_run [options]
 
 Options:
   -h, --help            show this help message and exit

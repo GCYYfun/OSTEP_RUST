@@ -1,7 +1,7 @@
 
 # Overview
 
-This program, scheduler.py, allows you to see how different schedulers perform
+This program, scheduler, allows you to see how different schedulers perform
 under scheduling metrics such as response time, turnaround time, and total
 wait time. Three schedulers are "implemented": FIFO, SJF, and RR.
 
@@ -12,12 +12,7 @@ revealing the answers. For example, if you want to compute response,
 turnaround, and wait for three jobs using the FIFO policy, run this:
 
 ```sh
-prompt> ./scheduler.py -p FIFO -j 3 -s 100
-```
-
-If that doesn't work, try this:
-```sh
-prompt> python ./scheduler.py -p FIFO -j 3 -s 100
+prompt> cargo run scheduler -p FIFO -j 3 -s 100
 ```
 
 This specifies the FIFO policy with three jobs, and, importantly, a specific
@@ -26,16 +21,16 @@ you have to specify this exact same random seed again. Let's run it and see
 what happens. This is what you should see:
 
 ```sh
-prompt> ./scheduler.py -p FIFO -j 3 -s 100
+prompt> cargo run scheduler -p FIFO -j 3 -s 100
 ARG policy FIFO
 ARG jobs 3
 ARG maxlen 10
 ARG seed 100
 
 Here is the job list, with the run time of each job: 
-  Job 0 (length = 1)
-  Job 1 (length = 4)
-  Job 2 (length = 7)
+  Job : 0  ( length = 6 )
+  Job : 1  ( length = 7 )
+  Job : 2  ( length = 4 )
 ```
 
 Compute the turnaround time, response time, and wait time for each job.  When
@@ -44,8 +39,8 @@ which will thus provide you with the answers. You can use -s <somenumber> or
 your own job list (-l 10,15,20 for example) to generate different problems for
 yourself.
 
-As you can see from this example, three jobs are generated: job 0 of length 1,
-job 1 of length 4, and job 2 of length 7. As the program states, you can now
+As you can see from this example, three jobs are generated: job 0 of length 6,
+job 1 of length 7, and job 2 of length 4. As the program states, you can now
 use this to compute some statistics and see if you have a grip on the basic
 concepts.
 
@@ -53,34 +48,34 @@ Once you are done, you can use the same program to "solve" the problem and see
 if you did your work correctly. To do so, use the "-c" flag. The output:
 
 ```sh
-prompt> ./scheduler.py -p FIFO -j 3 -s 100 -c
+prompt> cargo run scheduler -p FIFO -j 3 -s 100 -c
 ARG policy FIFO
 ARG jobs 3
 ARG maxlen 10
 ARG seed 100
 
 Here is the job list, with the run time of each job: 
-  Job 0 (length = 1)
-  Job 1 (length = 4)
-  Job 2 (length = 7)
+  Job : 0  ( length = 6 )
+  Job : 1  ( length = 7 )
+  Job : 2  ( length = 4 )
 
 ** Solutions **
 
 Execution trace:
-  [time   0] Run job 0 for 1.00 secs (DONE)
-  [time   1] Run job 1 for 4.00 secs (DONE)
-  [time   5] Run job 2 for 7.00 secs (DONE)
+  [ time   0 ] Run job 0 for 6.00 secs ( DONE at 6.00 )
+  [ time   6 ] Run job 1 for 7.00 secs ( DONE at 13.00 )
+  [ time  13 ] Run job 2 for 4.00 secs ( DONE at 17.00 )
 
 Final statistics:
-  Job   0 -- Response: 0.00  Turnaround 1.00  Wait 0.00
-  Job   1 -- Response: 1.00  Turnaround 5.00  Wait 1.00
-  Job   2 -- Response: 5.00  Turnaround 12.00  Wait 5.00
+  Job 0 -- Response: 0  Turnaround 6 Wait 0
+  Job 1 -- Response: 6  Turnaround 13 Wait 6
+  Job 2 -- Response: 13  Turnaround 17 Wait 13
 
-  Average -- Response: 2.00  Turnaround 6.00  Wait 2.00
+  Average -- Response: 6.3333335  Turnaround : 12  Wait : 6.3333335
 ```
 
 As you can see from the figure, the -c flag shows you what happened. Job 0 ran
-first for 1 second, Job 1 ran second for 4, and then Job 2 ran for 7
+first for 6 second, Job 1 ran second for 7, and then Job 2 ran for 4
 seconds. Not too hard; it is FIFO, after all! The execution trace shows these
 results.
 
@@ -102,7 +97,7 @@ the exact jobs you wish to see scheduled. For example, if you want to find out
 how SJF would perform with three jobs of lengths 5, 10, and 15, you can run:
 
 ```sh
-prompt> ./scheduler.py -p SJF -l 5,10,15
+prompt> cargo run scheduler -p SJF -l 5,10,15
 ARG policy SJF
 ARG jlist 5,10,15
 
@@ -123,7 +118,7 @@ first) or even RR (round robin) schedulers. Try them and see!
 And you can always run 
 
 ```sh
-prompt> ./scheduler.py -h
+prompt> cargo run scheduler -h
 ```
 
 to get a complete list of flags and options (including options such as setting

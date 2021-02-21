@@ -1,0 +1,19 @@
+Usage: cargo run fork [options]
+
+Options:
+  -h, --help            show this help message and exit
+  -s SEED, --seed=SEED  the random seed
+  -f FORK_PERCENTAGE, --forks=FORK_PERCENTAGE
+                        percent of actions that are forks (not exits)
+  -A ACTION_LIST, --action_list=ACTION_LIST
+                        action list, instead of randomly generated ones
+                        (format: a+b,b+c,b- means a fork b, b fork c, b exit)
+  -a ACTIONS, --actions=ACTIONS
+                        number of forks/exits to do
+  -t, --show_tree       show tree (not actions)
+  -P PRINT_STYLE, --print_style=PRINT_STYLE
+                        tree print style (basic, line1, line2, fancy)
+  -F, --final_only      just show final state
+  -L, --leaf_only       only leaf processes exit
+  -R, --local_reparent  reparent to local parent
+  -c, --compute         compute answers for me
