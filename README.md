@@ -9,7 +9,7 @@
 运行命令查看使用帮助
 
 ```rust
-Cargo run help
+cargo run help
 ```
 
 
