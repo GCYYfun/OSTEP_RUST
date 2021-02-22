@@ -499,14 +499,9 @@ fn execute_mlfq_op(options: MlfqOption) {
 
         response_sum   = response + response_sum;
         turnaround_sum = turnaround + turnaround_sum;
-
-
-        println!("  Avg {:2}: startTime n/a - response {:.2} - turnaround {:.2}",i,response_sum as f64 / num_jobs as f64,turnaround_sum as f64 / num_jobs as f64 );
-        println!();
     }
+    println!();
+    println!("  {:2} Job Avg : startTime n/a - response {:.2} - turnaround {:.2}",num_jobs,response_sum as f64 / num_jobs as f64,turnaround_sum as f64 / num_jobs as f64 );
+    println!();
 
-
-    
-
-    
 }
