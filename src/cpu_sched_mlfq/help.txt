@@ -1,4 +1,4 @@
-Usage: cargo run vsfs [options]
+Usage: cargo run mlfq [options]
 
 Options:
   -h, --help            show this help message and exit

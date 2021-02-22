@@ -26,6 +26,16 @@ Simulation cpu_sched 简单调度模拟
 
 
 
+Simulation cpu_sched_mlfq 多级反馈队列调度模拟
+
+    cargo run mlfq
+    运行 查看 多级反馈队列调度算法的运行
+
+    cargp run mlfq -h
+    查看更多使用方法 (具体参见README)
+
+
+
 Simulation cpu_sched_lottery 乐透调度模拟
 
     cargo run lottery -j 2 -s 0 

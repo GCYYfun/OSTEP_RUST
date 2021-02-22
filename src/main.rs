@@ -10,7 +10,7 @@ use std::env;
 mod cpu_intro;
 mod cpu_sched;
 mod cpu_sched_lottery;
-mod cpu_sched_mlfq; // not done
+mod cpu_sched_mlfq;
 
 // VM
 mod vm_beyondphys_policy;

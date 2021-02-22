@@ -10,6 +10,8 @@ struct MlfqOption {
     num_queues: i32,
     quantum: i32,
     quantum_list: String,
+    allotment: i32,
+    allotment_list:String,
     num_jobs: i32,
     maxlen: i32,
     maxio: i32,
@@ -28,6 +30,8 @@ impl MlfqOption {
             num_queues: 3,
             quantum: 10,
             quantum_list: String::from(""),
+            allotment: 1,
+            allotment_list: String::from(""),
             num_jobs: 3,
             maxlen: 100,
             maxio: 10,
@@ -81,6 +85,14 @@ pub fn parse_op(op_vec: Vec<&str>) {
                 mlfq_op.quantum_list = op_vec[i + 1].to_string();
                 i = i + 2;
             }
+            "-a" => {
+                mlfq_op.allotment = op_vec[i + 1].parse().unwrap();
+                i = i + 2;
+            }
+            "-A" => {
+                mlfq_op.allotment_list = op_vec[i + 1].to_string();
+                i = i + 2;
+            }
             "-j" => {
                 mlfq_op.num_jobs = op_vec[i + 1].parse().unwrap();
                 i = i + 2;
@@ -129,16 +141,16 @@ pub fn parse_op(op_vec: Vec<&str>) {
 fn execute_mlfq_op(options: MlfqOption) {
     let _rng = rand_chacha::ChaCha8Rng::seed_from_u64(options.seed);
 
-    let num_queues = options.num_queues;
+    let mut num_queues = options.num_queues;
 
     let mut quantum: HashMap<i32, i32> = HashMap::new();
 
     if options.quantum_list != "" {
         let quantum_lengths: Vec<&str> = options.quantum_list.split(",").collect();
-        let num_queues = quantum_lengths.len();
+        num_queues = quantum_lengths.len() as i32;
         let mut qc = num_queues - 1;
         for i in 0..num_queues {
-            quantum.insert(qc as i32, quantum_lengths[i].parse().unwrap());
+            quantum.insert(qc as i32, quantum_lengths[i as usize].parse().unwrap());
             qc -= 1;
         }
     } else {
@@ -147,9 +159,32 @@ fn execute_mlfq_op(options: MlfqOption) {
         }
     }
 
+    let mut allotment: HashMap<i32, i32> = HashMap::new();
+
+    if options.allotment_list != "" {
+        let allotment_lengths: Vec<&str> = options.quantum_list.split(",").collect();
+        if num_queues != allotment_lengths.len() as i32 {
+            println!("number of allotments specified must match number of quantums");
+            return
+        }
+        let mut qc = num_queues - 1;
+        for i in 0..num_queues {
+            allotment.insert(qc as i32, allotment_lengths[i as usize].parse().unwrap());
+            if qc != 0 && allotment[&qc] <= 0 {
+                println!("allotment must be positive integer");
+                return 
+            }
+            qc -= 1;
+        }
+    } else {
+        for i in 0..num_queues {
+            allotment.insert(i, options.allotment);
+        }
+    }
+
     let hi_queue = num_queues - 1;
 
-    let _io_time = options.io_time;
+    let io_time = options.io_time;
 
     let mut io_done: HashMap<i32, Vec<(i32, String)>> = HashMap::new();
 
@@ -163,6 +198,7 @@ fn execute_mlfq_op(options: MlfqOption) {
             let job_info: Vec<&str> = j.split(",").collect();
             if job_info.len() != 3 {
                 //  not good;
+                return
             }
 
             assert!(job_info.len() == 3);
@@ -174,6 +210,7 @@ fn execute_mlfq_op(options: MlfqOption) {
             let mut job_content: HashMap<String, i32> = HashMap::new();
             job_content.insert("currPri".to_string(), hi_queue);
             job_content.insert("ticksLeft".to_string(), *quantum.get(&hi_queue).unwrap());
+            job_content.insert("allotLeft".to_string(), *allotment.get(&hi_queue).unwrap());
             job_content.insert("start_time".to_string(), start_time);
             job_content.insert("run_time".to_string(), run_time);
             job_content.insert("timeLeft".to_string(), run_time);
@@ -185,7 +222,7 @@ fn execute_mlfq_op(options: MlfqOption) {
             //            'firstRun':-1}
 
             job.insert(job_cnt, job_content);
-            io_done.entry(start_time).or_insert(Vec::new());
+            io_done.entry(start_time).or_insert(vec![]);
             io_done
                 .get_mut(&start_time)
                 .unwrap()
@@ -203,6 +240,7 @@ fn execute_mlfq_op(options: MlfqOption) {
             let mut job_content: HashMap<String, i32> = HashMap::new();
             job_content.insert("currPri".to_string(), hi_queue);
             job_content.insert("ticksLeft".to_string(), *quantum.get(&hi_queue).unwrap());
+            job_content.insert("allotLeft".to_string(), *allotment.get(&hi_queue).unwrap());
             job_content.insert("start_time".to_string(), start_time);
             job_content.insert("run_time".to_string(), run_time);
             job_content.insert("timeLeft".to_string(), run_time);
@@ -211,8 +249,7 @@ fn execute_mlfq_op(options: MlfqOption) {
             job_content.insert("firstRun".to_string(), -1);
 
             job.insert(job_cnt, job_content);
-
-            io_done.entry(start_time).or_insert(Vec::new());
+            io_done.entry(start_time).or_insert(vec![]);
             io_done
                 .get_mut(&start_time)
                 .unwrap()
@@ -226,12 +263,18 @@ fn execute_mlfq_op(options: MlfqOption) {
     println!("Here is the list of inputs:");
     println!("OPTIONS jobs {}", num_jobs);
     println!("OPTIONS queues {}", num_queues);
-    for i in quantum.len() - 1..0 {
+    for i in (0..quantum.len()).rev() {
         println!(
-            "OPTIONS quantum length for queue {} is {}",
+            "OPTIONS allotments for queue {:2} is {:3}",
+            i,
+            allotment[&(i as i32)]
+        );
+        println!(
+            "OPTIONS quantum length for queue {:2} is {:3}",
             i,
             quantum[&(i as i32)]
         );
+
     }
 
     println!("OPTIONS boost {}", options.boost);
@@ -249,7 +292,7 @@ fn execute_mlfq_op(options: MlfqOption) {
     println!("Job List:");
     for i in 0..num_jobs {
         println!(
-            "  Job {}: start_time {} - run_time {} - io_freq {}",
+            "  Job {:2}: start_time {:3} - run_time {:3} - io_freq {:3}",
             i,
             job[&(i as i32)]["start_time"],
             job[&(i as i32)]["run_time"],
@@ -265,12 +308,13 @@ fn execute_mlfq_op(options: MlfqOption) {
         println!("times for each of the jobs.");
         println!("");
         println!("Use the -c flag to get the exact results when you are finished.");
+        return
     }
 
     let mut queue: HashMap<i32, Vec<i32>> = HashMap::new();
 
     for q in 0..num_queues {
-        queue.entry(q).or_insert(Vec::new());
+        queue.entry(q).or_insert(vec![]);
     }
 
     let mut curr_time = 0;
@@ -321,7 +365,7 @@ fn execute_mlfq_op(options: MlfqOption) {
                     .insert("doingIO".to_string(), 0);
                 println!("[ time {} ] {} by JOB {}", curr_time, typei, j);
 
-                if options.iobump == false {
+                if options.iobump == false || typei == "JOB BEGINS"{
                     queue.get_mut(&q).unwrap().push(j);
                 } else {
                     queue.get_mut(&q).unwrap().insert(0, j);
@@ -339,6 +383,10 @@ fn execute_mlfq_op(options: MlfqOption) {
 
         let curr_job = queue[&curr_queue][0];
 
+        if job[&curr_job]["currPri"] != curr_queue {
+            panic!("currPri[{}] does not match currQueue[{}]" ,job[&curr_job]["currPri"], curr_queue);
+        }
+
         *job.get_mut(&curr_job).unwrap().get_mut("timeLeft").unwrap() -= 1;
         *job.get_mut(&curr_job)
             .unwrap()
@@ -350,14 +398,19 @@ fn execute_mlfq_op(options: MlfqOption) {
         }
 
         let run_time = job[&curr_job]["run_time"];
-        let _io_freq = job[&curr_job]["io_freq"];
+        let io_freq = job[&curr_job]["io_freq"];
         let ticks_left = job[&curr_job]["ticksLeft"];
+        let allot_left = job[&curr_job]["allotLeft"];
         let time_left = job[&curr_job]["timeLeft"];
 
         println!(
-            "[ time {} ] Run JOB {} at PRIORITY {} [ TICKSLEFT {} run_time {} TIMELEFT {} ]",
-            curr_time, curr_job, curr_queue, ticks_left, run_time, time_left
+            "[ time {} ] Run JOB {} at PRIORITY {} [ TICKS {} ALLOT {} TIME {} (of {}) ]",
+            curr_time, curr_job, curr_queue, ticks_left,allot_left,time_left,run_time
         );
+
+        if time_left < 0 {
+            panic!("Error: should never have less than 0 time left to run");
+        }
 
         curr_time += 1;
 
@@ -368,12 +421,92 @@ fn execute_mlfq_op(options: MlfqOption) {
             job.get_mut(&curr_job)
                 .unwrap()
                 .insert("endTime".to_string(), curr_time);
-            // let done = queue[&currQueue].remove(0);
+            
+            let done = queue.get_mut(&curr_queue).unwrap().remove(0);
 
-            // assert!(done == currJob);
+            assert!(done == curr_job);
             continue;
         }
 
-        let _issued_io = false;
+        let mut issued_io = false;
+        if io_freq > 0 && ((run_time - time_left) % io_freq) == 0 {
+            println!("[ time {} ] IO_START by JOB {}" , curr_time, curr_job);
+
+            issued_io = true;
+
+            let _desched = queue.get_mut(&curr_queue).unwrap().remove(0);
+
+            job.get_mut(&curr_job).unwrap().insert("doingIO".to_string(),1);
+
+            if options.stay == true {
+                job.get_mut(&curr_job).unwrap().insert("ticksLeft".to_string(),quantum[&curr_queue]);
+                job.get_mut(&curr_job).unwrap().insert("allotLeft".to_string(),allotment[&curr_queue]);
+            }
+
+            let future_time = curr_time + io_time;
+
+            io_done.entry(future_time).or_insert(vec![]);
+
+            println!("IO DONE");
+
+            io_done.get_mut(&future_time).unwrap().push((curr_job, "IO_DONE".to_string()))
+        }
+
+        if ticks_left == 0 {
+            let mut _desched:i32 = -999;
+            if issued_io == false {
+                _desched = queue.get_mut(&curr_queue).unwrap().remove(0);
+            }
+            // assert!(&desched == &curr_job);
+            let n = job[&curr_job]["allotLeft"] - 1;
+            job.get_mut(&curr_job).unwrap().insert("allotLeft".to_string(),n);
+
+            if job[&curr_job]["allotLeft"] == 0 {
+                if curr_queue > 0 {
+                    job.get_mut(&curr_job).unwrap().insert("currPri".to_string(),curr_queue - 1);
+                    job.get_mut(&curr_job).unwrap().insert("ticksLeft".to_string(),quantum[&(curr_queue-1)]);
+                    job.get_mut(&curr_job).unwrap().insert("allotLeft".to_string(),curr_queue - 1);
+                    if issued_io == false {
+                        queue.get_mut(&(curr_queue-1)).unwrap().push(curr_job);
+                    }
+                }else {
+                    if issued_io == false {
+                        job.get_mut(&curr_job).unwrap().insert("ticksLeft".to_string(),quantum[&curr_queue]);
+                        job.get_mut(&curr_job).unwrap().insert("allotLeft".to_string(),allotment[&curr_queue]);
+                        queue.get_mut(&curr_queue).unwrap().push(curr_job);
+                    }
+                }
+            }else{
+                job.get_mut(&curr_job).unwrap().insert("ticksLeft".to_string(),quantum[&curr_queue]);
+                if issued_io == false {
+                    queue.get_mut(&curr_queue).unwrap().push(curr_job);
+                }
+                
+            }
+        }
     }
+
+
+    println!();
+    println!("Final statistics:");
+    let mut response_sum = 0;
+    let mut turnaround_sum = 0;
+    for i in 0..num_jobs {
+        let response = job[&(i as i32)]["firstRun"] - job[&(i as i32)]["start_time"];
+        let turnaround = job[&(i as i32)]["endTime"] - job[&(i as i32)]["start_time"];
+
+        println!("  Job {:2}: startTime {:3} - response {:3} - turnaround {:3}" , i, job[&(i as i32)]["start_time"], response, turnaround);
+
+        response_sum   = response + response_sum;
+        turnaround_sum = turnaround + turnaround_sum;
+
+
+        println!("  Avg {:2}: startTime n/a - response {:.2} - turnaround {:.2}",i,response_sum as f64 / num_jobs as f64,turnaround_sum as f64 / num_jobs as f64 );
+        println!();
+    }
+
+
+    
+
+    
 }
