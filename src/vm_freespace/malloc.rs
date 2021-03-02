@@ -42,7 +42,7 @@ impl Malloc {
 
     fn add_to_map(&mut self, addr: i32, size: i32) {
         assert!(!self.sizemap.contains_key(&addr));
-        self.sizemap.insert(addr,size);
+        self.sizemap.insert(addr, size);
     }
 
     fn malloc(&mut self, mut size: i32) -> (i32, i32) {
@@ -117,13 +117,13 @@ impl Malloc {
             self.freelist.insert(0, (addr, size));
         } else if self.return_policy == "ADDRSORT" {
             self.freelist.push((addr, size));
-            self.freelist.sort_by(|a,b| a.0.cmp(&b.0));
+            self.freelist.sort_by(|a, b| a.0.cmp(&b.0));
         } else if self.return_policy == "SIZESORT+" {
             self.freelist.push((addr, size));
-            self.freelist.sort_by(|a,b| a.1.cmp(&b.1));
+            self.freelist.sort_by(|a, b| a.1.cmp(&b.1));
         } else if self.return_policy == "SIZESORT-" {
             self.freelist.push((addr, size));
-            self.freelist.sort_by(|a,b| b.1.cmp(&a.1));
+            self.freelist.sort_by(|a, b| b.1.cmp(&a.1));
         }
 
         if self.coalesce == true {
@@ -352,37 +352,39 @@ fn execute_malloc_op(options: MallocOption) {
                 let size = op.split("+").collect::<Vec<&str>>()[1].parse().unwrap();
                 let (ptr, cnt) = m.malloc(size);
                 if ptr != -1 {
-                    p.insert(c,ptr);
+                    p.insert(c, ptr);
                 }
-                println!("ptr[{}] = Alloc({})" ,c, size);
+                println!("ptr[{}] = Alloc({})", c, size);
 
                 if options.solve == true {
-                    println!(" returned {} (searched {} elements) ",ptr,cnt);
-                }else {
+                    println!(" returned {} (searched {} elements) ", ptr, cnt);
+                } else {
                     println!("returned ?");
                 }
 
-                c+=1;
-            }else if op.starts_with("-") {
-                let index = op.split("-").collect::<Vec<&str>>()[1].parse::<usize>().unwrap();
-                if index>= p.len() {
+                c += 1;
+            } else if op.starts_with("-") {
+                let index = op.split("-").collect::<Vec<&str>>()[1]
+                    .parse::<usize>()
+                    .unwrap();
+                if index >= p.len() {
                     println!("Invalid Free: Skipping");
                     continue;
                 }
-                print!("Free(ptr[{}])",index);
+                print!("Free(ptr[{}])", index);
                 let rc = m.free(p[&(index as i32)]);
                 if options.solve == true {
-                        println!("returned {}" ,rc);
-                    }else {
-                        println!("returned ?");
-                    }
-            }else {
+                    println!("returned {}", rc);
+                } else {
+                    println!("returned ?");
+                }
+            } else {
                 panic!("badly specified operand: must be +Size or -Index");
             }
 
             if options.solve == true {
                 m.dump();
-            }else {
+            } else {
                 println!("List ?")
             }
             println!("");

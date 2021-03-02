@@ -6,7 +6,7 @@ use std::env;
     Virtualization
 */
 // CPU
-// mod cpu_api;
+mod cpu_api;
 mod cpu_intro;
 mod cpu_sched;
 mod cpu_sched_lottery;
@@ -36,7 +36,6 @@ mod dist_afs;
 mod file_implementation;
 mod file_raid;
 
-
 // util
 mod help;
 
@@ -56,9 +55,9 @@ fn main() {
         "process_run" | "pr" => {
             cpu_intro::parse_op(args);
         }
-        // "fork" => {
-        //     cpu_api::pares_op(args);
-        // }
+        "fork" => {
+            cpu_api::pares_op(args);
+        }
         "scheduler" => {
             cpu_sched::parse_op(args);
         }

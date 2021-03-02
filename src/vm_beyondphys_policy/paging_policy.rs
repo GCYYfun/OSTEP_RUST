@@ -259,7 +259,7 @@ fn execute_plt_op(options: PPOption) {
                             println!("REF(b) : {:?}", refer);
                         }
                         victim = -1;
-                        let mut page:i32 = -99999;
+                        let mut page: i32 = -99999;
                         while victim == -1 {
                             let ranz: f32 = rng.gen();
                             page = memory[(ranz * count as f32) as usize];
@@ -283,18 +283,17 @@ fn execute_plt_op(options: PPOption) {
 
                         // No GC how to do del
                         if memory.contains(&page) {
-                        // assert!("BROKEN");
+                            // assert!("BROKEN");
                             panic!("BROKEN");
                         }
-                        
+
                         refer.remove(&victim);
-                        if cdebug{
+                        if cdebug {
                             println!("VICTIM {} ", page);
-                            println!("LEN {}",memory.len());
+                            println!("LEN {}", memory.len());
                             println!("MEM {:?}", memory);
                             println!("REF (a) {:?}", refer);
                         }
-                            
                     } else if policy == "OPT" {
                         let mut max_replace = 0;
                         let mut replace_idx = -1;

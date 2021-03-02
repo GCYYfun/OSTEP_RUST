@@ -10,9 +10,13 @@ Simulation cpu_intro CPU模拟
 
 
 
-Simulation cpu_api (尚未提供)
+Simulation cpu_api
 
     cargo run fork 
+    运行 查看 syscall fork 的行为
+
+    cargp run fork -h
+    查看更多使用方法 (具体参见README)
 
 
 

@@ -27,7 +27,7 @@ Chapter | What To Do
 Chapter | What To Do | Status |
 --------|----------- | ------ |
 [Abstraction: Processes](http://www.cs.wisc.edu/~remzi/OSTEP/cpu-intro.pdf) | Run [process-run](src/cpu_intro)|✔️
-[Process API](http://www.cs.wisc.edu/~remzi/OSTEP/cpu-api.pdf) | Run [fork](src/cpu_api) and write some code|❌
+[Process API](http://www.cs.wisc.edu/~remzi/OSTEP/cpu-api.pdf) | Run [fork](src/cpu_api) and write some code|✔️
 [Direct Execution](http://www.cs.wisc.edu/~remzi/OSTEP/cpu-mechanisms.pdf) | Write some code
 [Scheduling Basics](http://www.cs.wisc.edu/~remzi/OSTEP/cpu-sched.pdf) | Run [scheduler](src/cpu_sched)|✔️
 [MLFQ Scheduling](http://www.cs.wisc.edu/~remzi/OSTEP/cpu-sched-mlfq.pdf)	| Run [mlfq](src/cpu_sched_mlfq)|✔️
